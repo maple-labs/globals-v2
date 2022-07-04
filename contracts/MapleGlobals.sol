@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.7;
 
-import { IGlobals } from "./interfaces/IGlobals.sol";
+import { NonTransparentProxied } from "../modules/non-transparent-proxy/contracts/NonTransparentProxied.sol";
 
-// TODO: Make upgradeable
+import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
+
 // TODO: Natspec
 // TODO: Timelocks?
 // TODO: Figure out how to make pool delegate only manage one pool per address
@@ -15,9 +16,12 @@ import { IGlobals } from "./interfaces/IGlobals.sol";
 //       Or should we save it on schedule?
 // NOTE: It will be crucial to check that values that are returned from globals are not zero in case of a bad key being passed in.
 
-contract Globals is IGlobals {
+contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
-    address public override governor;
+    /***************/
+    /*** Storage ***/
+    /***************/
+
     address public override mapleTreasury;
 
     mapping(address => bool) public override isBorrower;
@@ -39,17 +43,22 @@ contract Globals is IGlobals {
 
     mapping(bytes32 => mapping(address => uint256)) public override callSchedule;
 
-    constructor(address governor_) {
-        governor = governor_;
-    }
-
     /*****************/
     /*** Modifiers ***/
     /*****************/
 
     modifier isGovernor {
-        require(msg.sender == governor, "G:NOT_GOV");
+        require(msg.sender == admin(), "MG:NOT_GOVERNOR");
         _;
+    }
+
+    /**********************/
+    /*** View Functions ***/
+    /**********************/
+
+    // TODO: Add setter for updating the governor address.
+    function governor() external view override returns (address governor_) {
+        governor_ = admin();
     }
 
     /***********************/
@@ -89,22 +98,22 @@ contract Globals is IGlobals {
     /*******************/
 
     function setAdminFeeSplit(address pool_, uint256 adminFeeSplit_) external override isGovernor {
-        require(adminFeeSplit_ <= 100_00, "G:SAFS:SPLIT_GT_100");
+        require(adminFeeSplit_ <= 100_00, "MG:SAFS:SPLIT_GT_100");
         adminFeeSplit[pool_] = adminFeeSplit_;
     }
 
     function setManagementFeeSplit(address pool_, uint256 managementFeeSplit_) external override isGovernor {
-        require(managementFeeSplit_ <= 100_00, "G:SMFS:SPLIT_GT_100");
+        require(managementFeeSplit_ <= 100_00, "MG:SMFS:SPLIT_GT_100");
         managementFeeSplit[pool_] = managementFeeSplit_;
     }
 
     function setOriginationFeeSplit(address pool_, uint256 originationFeeSplit_) external override isGovernor {
-        require(originationFeeSplit_ <= 100_00, "G:SOFS:SPLIT_GT_100");
+        require(originationFeeSplit_ <= 100_00, "MG:SOFS:SPLIT_GT_100");
         originationFeeSplit[pool_] = originationFeeSplit_;
     }
 
     function setPlatformFee(address pool_, uint256 platformFee_) external override isGovernor {
-        require(platformFee_ <= 100_00, "G:SPF:FEE_GT_100");
+        require(platformFee_ <= 100_00, "MG:SPF:FEE_GT_100");
         platformFee[pool_] = platformFee_;
     }
 
@@ -138,7 +147,7 @@ contract Globals is IGlobals {
     /************************/
 
     function _pastTimelock(bytes32 functionId_, address caller_) internal view returns (bool pastTimelock_) {
-        return block.timestamp > callSchedule[functionId_][caller_];
+        return block.timestamp >= callSchedule[functionId_][caller_];
     }
 
 }
