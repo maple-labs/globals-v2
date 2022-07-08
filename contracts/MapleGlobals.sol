@@ -26,7 +26,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isPoolAsset;
-    mapping(address => bool) public override isPoolCoverAsset;
     mapping(address => bool) public override isPoolDelegate;
 
     mapping(address => uint256) public override adminFeeSplit;
@@ -83,10 +82,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function setValidPoolAsset(address poolAsset_, bool isValid_) external override isGovernor {
         isPoolAsset[poolAsset_] = isValid_;
-    }
-
-    function setValidPoolCoverAsset(address poolCoverAsset_, bool isValid_) external override isGovernor {
-        isPoolCoverAsset[poolCoverAsset_] = isValid_;
     }
 
     function setValidPoolDelegate(address poolDelegate_, bool isValid_) external override isGovernor {

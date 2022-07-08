@@ -17,8 +17,6 @@ interface IMapleGlobals {
 
     function isPoolAsset(address poolAsset_) external view returns (bool isValid_);
 
-    function isPoolCoverAsset(address poolCoverAsset_) external view returns (bool isValid_);
-
     function isPoolDelegate(address poolDelegate_) external view returns (bool isValid_);
 
     function governor() external view returns (address governor_);
@@ -52,8 +50,6 @@ interface IMapleGlobals {
     function setValidFactory(bytes32 factoryKey_, address factory_, bool isValid_) external;
 
     function setValidPoolAsset(address poolAsset_, bool isValid_) external;
-
-    function setValidPoolCoverAsset(address poolCoverAsset_, bool isValid_) external;
 
     function setValidPoolDelegate(address poolDelegate_, bool isValid_) external;
 
