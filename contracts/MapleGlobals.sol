@@ -3,7 +3,8 @@ pragma solidity 0.8.7;
 
 import { NonTransparentProxied } from "../modules/non-transparent-proxy/contracts/NonTransparentProxied.sol";
 
-import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
+import { IMapleGlobals }               from "./interfaces/IMapleGlobals.sol";
+import { IPoolLike, IPoolManagerLike } from "./interfaces/Interfaces.sol";
 
 // TODO: Natspec
 // TODO: Timelocks?
@@ -18,6 +19,11 @@ import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
 
 contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
+    struct PoolDelegate {
+        address ownedPool;
+        bool    isPoolDelegate;
+    }
+
     /***************/
     /*** Storage ***/
     /***************/
@@ -26,7 +32,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isPoolAsset;
-    mapping(address => bool) public override isPoolDelegate;
 
     mapping(address => uint256) public override adminFeeSplit;
     mapping(address => uint256) public override managementFeeSplit;
@@ -41,6 +46,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(bytes32 => mapping(address => bool)) public override isFactory;
 
     mapping(bytes32 => mapping(address => uint256)) public override callSchedule;
+
+    mapping(address => PoolDelegate) public poolDelegate;
 
     /*****************/
     /*** Modifiers ***/
@@ -60,12 +67,29 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         governor_ = admin();
     }
 
+    function isPoolDelegate(address account_) external view override returns (bool isPoolDelegate_) {
+        isPoolDelegate_ = poolDelegate[account_].isPoolDelegate;
+    }
+
+    function ownedPool(address account_) external view override returns (address pool_) {
+        pool_ = poolDelegate[account_].ownedPool;
+    }
+
     /***********************/
     /*** Address Setters ***/
     /***********************/
 
     function setMapleTreasury(address mapleTreasury_) external override isGovernor {
         mapleTreasury = mapleTreasury_;
+    }
+
+    function activatePool(address pool_) external override isGovernor {
+        address manager_ = IPoolLike(pool_).manager();
+        address admin_   = IPoolManagerLike(manager_).admin();
+
+        poolDelegate[admin_].ownedPool = pool_;
+
+        IPoolManagerLike(manager_).setActive(true);
     }
 
     /*************************/
@@ -84,8 +108,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         isPoolAsset[poolAsset_] = isValid_;
     }
 
-    function setValidPoolDelegate(address poolDelegate_, bool isValid_) external override isGovernor {
-        isPoolDelegate[poolDelegate_] = isValid_;
+    function setValidPoolDelegate(address account_, bool isValid_) external override isGovernor {
+        require(account_ != address(0), "MG:SVPD:ZERO_ADDRESS");
+
+        // Can only remove pool delegates once they no longer own a pool.
+        if (!isValid_) {
+            require(poolDelegate[account_].ownedPool == address(0), "MG:SVPD:OWNS_POOL");
+        }
+
+        poolDelegate[account_].isPoolDelegate = isValid_;
     }
 
     /*******************/

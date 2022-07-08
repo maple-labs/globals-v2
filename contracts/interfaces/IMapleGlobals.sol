@@ -17,7 +17,7 @@ interface IMapleGlobals {
 
     function isPoolAsset(address poolAsset_) external view returns (bool isValid_);
 
-    function isPoolDelegate(address poolDelegate_) external view returns (bool isValid_);
+    function isPoolDelegate(address account_) external view returns (bool isValid_);
 
     function governor() external view returns (address governor_);
 
@@ -33,11 +33,15 @@ interface IMapleGlobals {
 
     function originationFeeSplit(address pool_) external view returns (uint256 originationFeeSplit_);
 
+    function ownedPool(address account_) external view returns (address pool_);
+
     function platformFee(address pool_) external view returns (uint256 platformFee_);
 
     /***********************/
     /*** Address Setters ***/
     /***********************/
+
+    function activatePool(address pool_) external;
 
     function setMapleTreasury(address mapleTreasury_) external;
 

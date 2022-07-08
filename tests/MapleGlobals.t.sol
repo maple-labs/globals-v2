@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.7;
 
-import { TestUtils } from "../modules/contract-test-utils/contracts/test.sol";
-
+import { TestUtils }           from "../modules/contract-test-utils/contracts/test.sol";
 import { NonTransparentProxy } from "../modules/non-transparent-proxy/contracts/NonTransparentProxy.sol";
 
 import { MapleGlobals } from "../contracts/MapleGlobals.sol";
+
+import { MockPool, MockPoolManager } from "./mocks/Mocks.sol";
 
 contract BaseMapleGlobalsTest is TestUtils {
 
@@ -18,7 +19,7 @@ contract BaseMapleGlobalsTest is TestUtils {
 
     function setUp() public virtual {
         implementation = address(new MapleGlobals());
-        globals          = MapleGlobals(address(new NonTransparentProxy(GOVERNOR, address(implementation))));
+        globals        = MapleGlobals(address(new NonTransparentProxy(GOVERNOR, address(implementation))));
     }
 
 }
@@ -258,6 +259,36 @@ contract SetPlatformFeeTests is BaseMapleGlobalsTest {
         globals.setPlatformFee(POOL_ADDRESS, 20_00);
 
         assertEq(globals.platformFee(POOL_ADDRESS), 20_00);
+    }
+
+}
+
+/*******************************/
+/*** Pool Activation Setters ***/
+/*******************************/
+
+contract ActivatePoolTests is BaseMapleGlobalsTest {
+
+    address admin = address(13);
+
+    MockPoolManager manager = new MockPoolManager(admin);
+    MockPool        pool    = new MockPool(address(manager));
+
+    function test_activatePool_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.activatePool(address(pool));
+
+        vm.prank(GOVERNOR);
+        globals.activatePool(address(pool));
+    }
+
+    function test_activatePool_success() external {
+        assertEq(globals.ownedPool(admin), address(0));
+
+        vm.prank(GOVERNOR);
+        globals.activatePool(address(pool));
+
+        assertEq(globals.ownedPool(admin), address(pool));
     }
 
 }
