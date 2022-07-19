@@ -64,6 +64,42 @@ contract SetSecurityAdminTests is BaseMapleGlobalsTest {
 
 }
 
+/***********************/
+/*** Boolean Setters ***/
+/***********************/
+
+contract SetProtocolPauseTests is BaseMapleGlobalsTest {
+
+    address SECURITY_ADMIN = address(new Address());
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.prank(GOVERNOR);
+        globals.setSecurityAdmin(SECURITY_ADMIN);
+    }
+
+    function test_setProtocolPause_notSecurityAdmin() external {
+        vm.expectRevert("MG:SPP:NOT_SECURITY_ADMIN");
+        globals.setProtocolPause(true);
+    }
+
+    function test_setProtocolPause() external {
+        assertTrue(!globals.protocolPaused());
+
+        vm.prank(SECURITY_ADMIN);
+        globals.setProtocolPause(true);
+
+        assertTrue(globals.protocolPaused());
+
+        vm.prank(SECURITY_ADMIN);
+        globals.setProtocolPause(false);
+
+        assertTrue(!globals.protocolPaused());
+    }
+
+}
+
 /*************************/
 /*** Allowlist Setters ***/
 /*************************/

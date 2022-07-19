@@ -31,6 +31,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     address public override mapleTreasury;
     address public override securityAdmin;
 
+    bool public override protocolPaused;
+
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isPoolAsset;
 
@@ -96,6 +98,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function setSecurityAdmin(address securityAdmin_) external override isGovernor {
         securityAdmin = securityAdmin_;
     }
+
+    /***********************/
+    /*** Boolean Setters ***/
+    /***********************/  
+
+    function setProtocolPause(bool protocolPaused_) external override {
+        require(msg.sender == securityAdmin, "MG:SPP:NOT_SECURITY_ADMIN");
+        protocolPaused = protocolPaused_;
+    } 
 
     /*************************/
     /*** Allowlist Setters ***/

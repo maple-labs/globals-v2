@@ -37,6 +37,8 @@ interface IMapleGlobals {
 
     function platformFee(address pool_) external view returns (uint256 platformFee_);
 
+    function protocolPaused() external view returns (bool protocolPaused_);
+
     function securityAdmin() external view returns (address securityAdmin_);
 
     /***********************/
@@ -48,6 +50,12 @@ interface IMapleGlobals {
     function setMapleTreasury(address mapleTreasury_) external;
     
     function setSecurityAdmin(address securityAdmin_) external; 
+
+    /***********************/
+    /*** Boolean Setters ***/
+    /***********************/
+
+    function setProtocolPause(bool protocolPaused_) external;
 
     /*************************/
     /*** Allowlist Setters ***/
