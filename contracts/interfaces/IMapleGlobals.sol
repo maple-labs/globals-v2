@@ -37,6 +37,8 @@ interface IMapleGlobals {
 
     function platformFee(address pool_) external view returns (uint256 platformFee_);
 
+    function securityAdmin() external view returns (address securityAdmin_);
+
     /***********************/
     /*** Address Setters ***/
     /***********************/
@@ -44,6 +46,8 @@ interface IMapleGlobals {
     function activatePool(address pool_) external;
 
     function setMapleTreasury(address mapleTreasury_) external;
+    
+    function setSecurityAdmin(address securityAdmin_) external; 
 
     /*************************/
     /*** Allowlist Setters ***/

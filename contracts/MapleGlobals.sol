@@ -29,6 +29,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /***************/
 
     address public override mapleTreasury;
+    address public override securityAdmin;
 
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isPoolAsset;
@@ -79,10 +80,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Address Setters ***/
     /***********************/
 
-    function setMapleTreasury(address mapleTreasury_) external override isGovernor {
-        mapleTreasury = mapleTreasury_;
-    }
-
     function activatePool(address pool_) external override isGovernor {
         address manager_ = IPoolLike(pool_).manager();
         address admin_   = IPoolManagerLike(manager_).admin();
@@ -90,6 +87,14 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         poolDelegate[admin_].ownedPool = pool_;
 
         IPoolManagerLike(manager_).setActive(true);
+    }
+
+    function setMapleTreasury(address mapleTreasury_) external override isGovernor {
+        mapleTreasury = mapleTreasury_;
+    }
+
+    function setSecurityAdmin(address securityAdmin_) external override isGovernor {
+        securityAdmin = securityAdmin_;
     }
 
     /*************************/

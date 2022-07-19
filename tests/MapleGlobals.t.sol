@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.7;
 
-import { TestUtils }           from "../modules/contract-test-utils/contracts/test.sol";
+import { Address, TestUtils }  from "../modules/contract-test-utils/contracts/test.sol";
 import { NonTransparentProxy } from "../modules/non-transparent-proxy/contracts/NonTransparentProxy.sol";
 
 import { MapleGlobals } from "../contracts/MapleGlobals.sol";
@@ -10,8 +10,8 @@ import { MockPool, MockPoolManager } from "./mocks/Mocks.sol";
 
 contract BaseMapleGlobalsTest is TestUtils {
 
-    address constant GOVERNOR    = address(1);
-    address constant SET_ADDRESS = address(2);
+    address GOVERNOR    = address(new Address());
+    address SET_ADDRESS = address(new Address());
 
     address implementation;
 
@@ -33,9 +33,6 @@ contract SetMapleTreasuryTests is BaseMapleGlobalsTest {
     function test_setMapleTreasury_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
         globals.setMapleTreasury(SET_ADDRESS);
-
-        vm.prank(GOVERNOR);
-        globals.setMapleTreasury(SET_ADDRESS);
     }
 
     function test_setMapleTreasury() external {
@@ -45,6 +42,24 @@ contract SetMapleTreasuryTests is BaseMapleGlobalsTest {
         globals.setMapleTreasury(SET_ADDRESS);
 
         assertEq(globals.mapleTreasury(), SET_ADDRESS);
+    }
+
+}
+
+contract SetSecurityAdminTests is BaseMapleGlobalsTest {
+
+    function test_setSecurityAdmin_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setSecurityAdmin(SET_ADDRESS);
+    }
+
+    function test_setSecurityAdmin() external {
+        assertEq(globals.securityAdmin(), address(0));
+
+        vm.prank(GOVERNOR);
+        globals.setSecurityAdmin(SET_ADDRESS);
+
+        assertEq(globals.securityAdmin(), SET_ADDRESS);
     }
 
 }
