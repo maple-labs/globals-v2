@@ -38,6 +38,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => uint256) public override adminFeeSplit;
     mapping(address => uint256) public override managementFeeSplit;
+    mapping(address => uint256) public override maxCoverLiquidationPercent;
+    mapping(address => uint256) public override minCoverAmount;
     mapping(address => uint256) public override originationFeeSplit;
     mapping(address => uint256) public override platformFee;
 
@@ -89,6 +91,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         poolDelegate[admin_].ownedPool = pool_;
 
         IPoolManagerLike(manager_).setActive(true);
+
+        // Note: minCoverAmount is not enforced at activation time.
     }
 
     function setMapleTreasury(address mapleTreasury_) external override isGovernor {
@@ -133,6 +137,20 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         }
 
         poolDelegate[account_].isPoolDelegate = isValid_;
+    }
+
+    /*********************/
+    /*** Cover Setters ***/
+    /*********************/
+
+    function setMinCoverAmount(address pool_, uint256 minCoverAmount_) external override isGovernor {
+        minCoverAmount[pool_] = minCoverAmount_;
+    }
+
+    function setMaxCoverLiquidationPercent(address pool_, uint256 maxCoverLiquidationPercent_) external override isGovernor {
+        require(maxCoverLiquidationPercent_ <= 100_00, "MG:SMCLP:GT_100");
+
+        maxCoverLiquidationPercent[pool_] = maxCoverLiquidationPercent_;
     }
 
     /*******************/

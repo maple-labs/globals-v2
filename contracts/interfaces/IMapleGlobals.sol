@@ -27,6 +27,10 @@ interface IMapleGlobals {
 
     function maxValue(address pool_, bytes32 paramId_) external view returns (uint256 maxValue_);
 
+    function maxCoverLiquidationPercent(address pool_) external view returns (uint256 maxCoverLiquidationPercent_);
+
+    function minCoverAmount(address pool_) external view returns (uint256 minCoverAmount_);
+
     function minTimelock(bytes32 functionId_) external view returns (uint256 minTimelock);
 
     function minValue(address pool_, bytes32 paramId_) external view returns (uint256 minValue_);
@@ -68,6 +72,14 @@ interface IMapleGlobals {
     function setValidPoolAsset(address poolAsset_, bool isValid_) external;
 
     function setValidPoolDelegate(address poolDelegate_, bool isValid_) external;
+
+    /*********************/
+    /*** Cover Setters ***/
+    /*********************/
+
+    function setMaxCoverLiquidationPercent(address pool_, uint256 maxCoverLiquidationPercent_) external;
+
+    function setMinCoverAmount(address pool_, uint256 minCoverAmount_) external;
 
     /*******************/
     /*** Fee Setters ***/

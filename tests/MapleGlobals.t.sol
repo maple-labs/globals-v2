@@ -182,6 +182,62 @@ contract SetValidPoolAssetTests is BaseMapleGlobalsTest {
 
 }
 
+/*********************/
+/*** Cover Setters ***/
+/*********************/
+
+contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
+
+    function test_setMaxCoverLiquidationPercent_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 50_00);
+
+        vm.prank(GOVERNOR);
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 50_00);
+    }
+
+    function test_setMaxCoverLiquidationPercent_gt100() external {
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert("MG:SMCLP:GT_100");
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_01);
+
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_00);
+    }
+
+    function test_setMaxCoverLiquidationPercent() external {
+        vm.startPrank(GOVERNOR);
+
+        assertEq(globals.maxCoverLiquidationPercent(SET_ADDRESS), 0);
+
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 50_00);
+
+        assertEq(globals.maxCoverLiquidationPercent(SET_ADDRESS), 50_00);
+    }
+
+}
+
+contract SetMinCoverAmountTests is BaseMapleGlobalsTest {
+
+    function test_setMinCoverAmount_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setMinCoverAmount(SET_ADDRESS, 1_000e6);
+
+        vm.prank(GOVERNOR);
+        globals.setMinCoverAmount(SET_ADDRESS, 1_000e6);
+    }
+
+    function test_setMinCoverAmount() external {
+        vm.startPrank(GOVERNOR);
+
+        assertEq(globals.minCoverAmount(SET_ADDRESS), 0);
+
+        globals.setMinCoverAmount(SET_ADDRESS, 1_000e6);
+
+        assertEq(globals.minCoverAmount(SET_ADDRESS), 1_000e6);
+    }
+
+}
+
 /*******************/
 /*** Fee Setters ***/
 /*******************/
