@@ -28,6 +28,39 @@ contract BaseMapleGlobalsTest is TestUtils {
 /*** Address Setters ***/
 /***********************/
 
+contract AcceptGovernorTests is BaseMapleGlobalsTest {
+
+    bytes32 constant ADMIN_SLOT = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
+
+    function test_acceptGovernor_notPendingGovernor() external {
+        vm.expectRevert("MG:NOT_PENDING_GOVERNOR");
+        globals.acceptGovernor();
+    }
+
+    function test_acceptGovernor() external {
+        vm.prank(GOVERNOR);
+        globals.setPendingGovernor(SET_ADDRESS);
+
+        address ADMIN = address(uint160(uint256(vm.load(address(globals), ADMIN_SLOT))));
+
+        assertEq(ADMIN,                     GOVERNOR);
+        assertEq(globals.admin(),           GOVERNOR);
+        assertEq(globals.governor(),        GOVERNOR);
+        assertEq(globals.pendingGovernor(), SET_ADDRESS);
+
+        vm.prank(SET_ADDRESS);
+        globals.acceptGovernor();
+
+        ADMIN = address(uint160(uint256(vm.load(address(globals), ADMIN_SLOT))));
+
+        assertEq(ADMIN,                     SET_ADDRESS);
+        assertEq(globals.admin(),           SET_ADDRESS);
+        assertEq(globals.governor(),        SET_ADDRESS);
+        assertEq(globals.pendingGovernor(), address(0));
+    }
+
+}
+
 contract SetMapleTreasuryTests is BaseMapleGlobalsTest {
 
     function test_setMapleTreasury_notGovernor() external {
@@ -42,6 +75,24 @@ contract SetMapleTreasuryTests is BaseMapleGlobalsTest {
         globals.setMapleTreasury(SET_ADDRESS);
 
         assertEq(globals.mapleTreasury(), SET_ADDRESS);
+    }
+
+}
+
+contract SetPendingGovernorTests is BaseMapleGlobalsTest {
+
+    function test_setPendingGovernor_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setPendingGovernor(SET_ADDRESS);
+    }
+
+    function test_setPendingGovernor() external {
+        assertEq(globals.pendingGovernor(), address(0));
+
+        vm.prank(GOVERNOR);
+        globals.setPendingGovernor(SET_ADDRESS);
+
+        assertEq(globals.pendingGovernor(), SET_ADDRESS);
     }
 
 }

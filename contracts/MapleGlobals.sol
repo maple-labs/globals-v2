@@ -29,6 +29,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /***************/
 
     address public override mapleTreasury;
+    address public override pendingGovernor;
     address public override securityAdmin;
 
     bool public override protocolPaused;
@@ -61,6 +62,20 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     modifier isGovernor {
         require(msg.sender == admin(), "MG:NOT_GOVERNOR");
         _;
+    }
+
+    /***********************************/
+    /*** Governor Transfer Functions ***/
+    /***********************************/
+
+    function acceptGovernor() external {
+        require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOVERNOR");
+        _setAddress(ADMIN_SLOT, msg.sender);
+        pendingGovernor = address(0);
+    }
+
+    function setPendingGovernor(address pendingGovernor_) external isGovernor {
+        pendingGovernor = pendingGovernor_;
     }
 
     /**********************/
@@ -208,6 +223,12 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function _pastTimelock(bytes32 functionId_, address caller_) internal view returns (bool pastTimelock_) {
         return block.timestamp >= callSchedule[functionId_][caller_];
+    }
+
+    function _setAddress(bytes32 slot_, address value_) private {
+        assembly {
+            sstore(slot_, value_)
+        }
     }
 
 }

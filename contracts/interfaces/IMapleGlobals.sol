@@ -39,6 +39,8 @@ interface IMapleGlobals {
 
     function ownedPool(address account_) external view returns (address pool_);
 
+    function pendingGovernor() external view returns (address pendingGovernor_);
+
     function platformFee(address pool_) external view returns (uint256 platformFee_);
 
     function protocolPaused() external view returns (bool protocolPaused_);
