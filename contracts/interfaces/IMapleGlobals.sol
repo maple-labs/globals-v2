@@ -19,6 +19,8 @@ interface IMapleGlobals {
 
     function isPoolDelegate(address account_) external view returns (bool isValid_);
 
+    function isPoolDeployer(address account_) external view returns (bool isValid_);
+
     function governor() external view returns (address governor_);
 
     function managementFeeSplit(address pool_) external view returns (uint256 managementFeeSplit_);
@@ -74,6 +76,8 @@ interface IMapleGlobals {
     function setValidPoolAsset(address poolAsset_, bool isValid_) external;
 
     function setValidPoolDelegate(address poolDelegate_, bool isValid_) external;
+
+    function setValidPoolDeployer(address poolDeployer_, bool isValid_) external;
 
     /*********************/
     /*** Cover Setters ***/

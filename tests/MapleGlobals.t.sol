@@ -233,6 +233,31 @@ contract SetValidPoolAssetTests is BaseMapleGlobalsTest {
 
 }
 
+contract SetValidPoolDeployer is BaseMapleGlobalsTest {
+
+    function test_setValidDeployer_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setValidPoolDeployer(SET_ADDRESS, true);
+
+        vm.prank(GOVERNOR);
+        globals.setValidPoolDeployer(SET_ADDRESS, true);
+    }
+
+    function test_setValidDeployer() external {
+        vm.startPrank(GOVERNOR);
+
+        assertTrue(!globals.isPoolDeployer(SET_ADDRESS));
+
+        globals.setValidPoolDeployer(SET_ADDRESS, true);
+
+        assertTrue(globals.isPoolDeployer(SET_ADDRESS));
+
+        globals.setValidPoolDeployer(SET_ADDRESS, false);
+
+        assertTrue(!globals.isPoolDeployer(SET_ADDRESS));
+    }
+}
+
 /*********************/
 /*** Cover Setters ***/
 /*********************/
