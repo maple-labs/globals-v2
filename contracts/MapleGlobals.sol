@@ -35,6 +35,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Storage ***/
     /***************/
 
+    uint256 public constant HUNDRED_PERCENT = 1e18;
+
     address public override mapleTreasury;
     address public override pendingGovernor;
     address public override securityAdmin;
@@ -47,13 +49,12 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(address => bool) public override isPoolAsset;
     mapping(address => bool) public override isPoolDeployer;
 
-    mapping(address => uint256) public override adminFeeSplit;
-    mapping(address => uint256) public override managementFeeSplit;
     mapping(address => uint256) public override manualOverridePrice;
     mapping(address => uint256) public override maxCoverLiquidationPercent;
     mapping(address => uint256) public override minCoverAmount;
-    mapping(address => uint256) public override originationFeeSplit;
-    mapping(address => uint256) public override platformFee;
+    mapping(address => uint256) public override platformManagementFeeRate;
+    mapping(address => uint256) public override platformOriginationFeeRate;
+    mapping(address => uint256) public override platformServiceFeeRate;
 
     mapping(bytes32 => uint256) public override minTimelock;
 
@@ -173,7 +174,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setMaxCoverLiquidationPercent(address pool_, uint256 maxCoverLiquidationPercent_) external override isGovernor {
-        require(maxCoverLiquidationPercent_ <= 100_00, "MG:SMCLP:GT_100");
+        require(maxCoverLiquidationPercent_ <= HUNDRED_PERCENT, "MG:SMCLP:GT_100");
 
         maxCoverLiquidationPercent[pool_] = maxCoverLiquidationPercent_;
     }
@@ -182,24 +183,19 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Fee Setters ***/
     /*******************/
 
-    function setAdminFeeSplit(address pool_, uint256 adminFeeSplit_) external override isGovernor {
-        require(adminFeeSplit_ <= 100_00, "MG:SAFS:SPLIT_GT_100");
-        adminFeeSplit[pool_] = adminFeeSplit_;
+    function setPlatformManagementFeeRate(address pool_, uint256 platformManagementFeeRate_) external override isGovernor {
+        require(platformManagementFeeRate_ <= HUNDRED_PERCENT, "MG:SPMFR:RATE_GT_100");
+        platformManagementFeeRate[pool_] = platformManagementFeeRate_;
     }
 
-    function setManagementFeeSplit(address pool_, uint256 managementFeeSplit_) external override isGovernor {
-        require(managementFeeSplit_ <= 100_00, "MG:SMFS:SPLIT_GT_100");
-        managementFeeSplit[pool_] = managementFeeSplit_;
+    function setPlatformOriginationFeeRate(address pool_, uint256 platformOriginationFeeRate_) external override isGovernor {
+        require(platformOriginationFeeRate_ <= HUNDRED_PERCENT, "MG:SPOFR:RATE_GT_100");
+        platformOriginationFeeRate[pool_] = platformOriginationFeeRate_;
     }
 
-    function setOriginationFeeSplit(address pool_, uint256 originationFeeSplit_) external override isGovernor {
-        require(originationFeeSplit_ <= 100_00, "MG:SOFS:SPLIT_GT_100");
-        originationFeeSplit[pool_] = originationFeeSplit_;
-    }
-
-    function setPlatformFee(address pool_, uint256 platformFee_) external override isGovernor {
-        require(platformFee_ <= 100_00, "MG:SPF:FEE_GT_100");
-        platformFee[pool_] = platformFee_;
+    function setPlatformServiceFeeRate(address pool_, uint256 platformServiceFeeRate_) external override isGovernor {
+        require(platformServiceFeeRate_ <= HUNDRED_PERCENT, "MG:SPSFR:RATE_GT_100");
+        platformServiceFeeRate[pool_] = platformServiceFeeRate_;
     }
 
     /*********************/

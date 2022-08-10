@@ -7,8 +7,6 @@ interface IMapleGlobals {
     /*** State Variables ***/
     /***********************/
 
-    function adminFeeSplit(address pool_) external view returns (uint256 adminFeeSplit_);
-
     function callSchedule(bytes32 functionId_, address caller_) external view returns (uint256 callSchedule_);
 
     function isBorrower(address borrower_) external view returns (bool isValid_);
@@ -24,8 +22,6 @@ interface IMapleGlobals {
     function getLatestPrice(address asset_) external view returns (uint256 price_);
 
     function governor() external view returns (address governor_);
-
-    function managementFeeSplit(address pool_) external view returns (uint256 managementFeeSplit_);
 
     function manualOverridePrice(address asset_) external view returns (uint256 manualOverridePrice_);
 
@@ -43,13 +39,15 @@ interface IMapleGlobals {
 
     function oracleFor(address asset_) external view returns (address oracle_);
 
-    function originationFeeSplit(address pool_) external view returns (uint256 originationFeeSplit_);
-
     function ownedPool(address account_) external view returns (address pool_);
 
     function pendingGovernor() external view returns (address pendingGovernor_);
 
-    function platformFee(address pool_) external view returns (uint256 platformFee_);
+    function platformManagementFeeRate(address pool_) external view returns (uint256 platformManagementFeeRate_);
+
+    function platformOriginationFeeRate(address pool_) external view returns (uint256 platformOriginationFeeRate_);
+
+    function platformServiceFeeRate(address pool_) external view returns (uint256 platformServiceFeeRate_);
 
     function protocolPaused() external view returns (bool protocolPaused_);
 
@@ -105,13 +103,11 @@ interface IMapleGlobals {
     /*** Fee Setters ***/
     /*******************/
 
-    function setAdminFeeSplit(address pool_, uint256 adminFeeSplit_) external;
+    function setPlatformManagementFeeRate(address pool_, uint256 platformManagementFeeRate_) external;
 
-    function setManagementFeeSplit(address pool_, uint256 managementFeeSplit_) external;
+    function setPlatformOriginationFeeRate(address pool_, uint256 platformOriginationFeeRate_) external;
 
-    function setOriginationFeeSplit(address pool_, uint256 originationFeeSplit_) external;
-
-    function setPlatformFee(address pool_, uint256 platformFee_) external;
+    function setPlatformServiceFeeRate(address pool_, uint256 platformServiceFeeRate_) external;
 
     /*********************/
     /*** Range Setters ***/

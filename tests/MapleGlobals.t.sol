@@ -333,9 +333,9 @@ contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
     function test_setMaxCoverLiquidationPercent_gt100() external {
         vm.startPrank(GOVERNOR);
         vm.expectRevert("MG:SMCLP:GT_100");
-        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_01);
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 1e18 + 1);
 
-        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_00);
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 1e18);
     }
 
     function test_setMaxCoverLiquidationPercent() external {
@@ -376,130 +376,98 @@ contract SetMinCoverAmountTests is BaseMapleGlobalsTest {
 /*** Fee Setters ***/
 /*******************/
 
-contract SetAdminFeeSplitTests is BaseMapleGlobalsTest {
+contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
-    address constant POOL_ADDRESS = address(3);
+    address POOL_ADDRESS = address(new Address());
 
-    function test_setAdminFeeSplit_notGovernor() external {
+    function test_setPlatformManagementFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setAdminFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformManagementFeeRate(POOL_ADDRESS, 0.2e18);
 
         vm.prank(GOVERNOR);
-        globals.setAdminFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformManagementFeeRate(POOL_ADDRESS, 0.2e18);
     }
 
-    function test_setAdminFeeSplit_outOfBounds() external {
+    function test_setPlatformManagementFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        vm.expectRevert("MG:SAFS:SPLIT_GT_100");
-        globals.setAdminFeeSplit(POOL_ADDRESS, 100_01);
+        vm.expectRevert("MG:SPMFR:RATE_GT_100");
+        globals.setPlatformManagementFeeRate(POOL_ADDRESS, 1e18 + 1);
 
-        globals.setAdminFeeSplit(POOL_ADDRESS, 100_00);
+        globals.setPlatformManagementFeeRate(POOL_ADDRESS, 1e18);
     }
 
-    function test_setAdminFeeSplit() external {
-        assertEq(globals.adminFeeSplit(POOL_ADDRESS), 0);
+    function test_setPlatformManagementFeeRate() external {
+        assertEq(globals.platformManagementFeeRate(POOL_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
-        globals.setAdminFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformManagementFeeRate(POOL_ADDRESS, 0.2e18);
 
-        assertEq(globals.adminFeeSplit(POOL_ADDRESS), 20_00);
+        assertEq(globals.platformManagementFeeRate(POOL_ADDRESS), 0.2e18);
     }
 
 }
 
-contract SetManagementFeeSplitTests is BaseMapleGlobalsTest {
+contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
 
-    address constant POOL_ADDRESS = address(3);
+    address POOL_ADDRESS = address(new Address());
 
-    function test_setManagementFeeSplit_notGovernor() external {
+    function test_setPlatformOriginationFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setManagementFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformOriginationFeeRate(POOL_ADDRESS, 0.2e18);
 
         vm.prank(GOVERNOR);
-        globals.setManagementFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformOriginationFeeRate(POOL_ADDRESS, 0.2e18);
     }
 
-    function test_setManagementFeeSplit_outOfBounds() external {
+    function test_setPlatformOriginationFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        vm.expectRevert("MG:SMFS:SPLIT_GT_100");
-        globals.setManagementFeeSplit(POOL_ADDRESS, 100_01);
+        vm.expectRevert("MG:SPOFR:RATE_GT_100");
+        globals.setPlatformOriginationFeeRate(POOL_ADDRESS, 1e18 + 1);
 
-        globals.setManagementFeeSplit(POOL_ADDRESS, 100_00);
+        globals.setPlatformOriginationFeeRate(POOL_ADDRESS, 1e18);
     }
 
-    function test_setManagementFeeSplit() external {
-        assertEq(globals.managementFeeSplit(POOL_ADDRESS), 0);
+    function test_setPlatformOriginationFeeRate() external {
+        assertEq(globals.platformOriginationFeeRate(POOL_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
-        globals.setManagementFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformOriginationFeeRate(POOL_ADDRESS, 0.2e18);
 
-        assertEq(globals.managementFeeSplit(POOL_ADDRESS), 20_00);
+        assertEq(globals.platformOriginationFeeRate(POOL_ADDRESS), 0.2e18);
     }
 
 }
 
-contract SetOriginationFeeSplitTests is BaseMapleGlobalsTest {
+contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
-    address constant POOL_ADDRESS = address(3);
+    address POOL_ADDRESS = address(new Address());
 
-    function test_setOriginationFeeSplit_notGovernor() external {
+    function test_setPlatformServiceFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setOriginationFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformServiceFeeRate(POOL_ADDRESS, 0.2e18);
 
         vm.prank(GOVERNOR);
-        globals.setOriginationFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformServiceFeeRate(POOL_ADDRESS, 0.2e18);
     }
 
-    function test_setOriginationFeeSplit_outOfBounds() external {
+    function test_setPlatformServiceFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        vm.expectRevert("MG:SOFS:SPLIT_GT_100");
-        globals.setOriginationFeeSplit(POOL_ADDRESS, 100_01);
+        vm.expectRevert("MG:SPSFR:RATE_GT_100");
+        globals.setPlatformServiceFeeRate(POOL_ADDRESS, 1e18 + 1);
 
-        globals.setOriginationFeeSplit(POOL_ADDRESS, 100_00);
+        globals.setPlatformServiceFeeRate(POOL_ADDRESS, 1e18);
     }
 
-    function test_setOriginationFeeSplit() external {
-        assertEq(globals.originationFeeSplit(POOL_ADDRESS), 0);
+    function test_setPlatformServiceFeeRate() external {
+        assertEq(globals.platformServiceFeeRate(POOL_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
-        globals.setOriginationFeeSplit(POOL_ADDRESS, 20_00);
+        globals.setPlatformServiceFeeRate(POOL_ADDRESS, 0.2e18);
 
-        assertEq(globals.originationFeeSplit(POOL_ADDRESS), 20_00);
-    }
-
-}
-
-contract SetPlatformFeeTests is BaseMapleGlobalsTest {
-
-    address constant POOL_ADDRESS = address(3);
-
-    function test_setPlatformFee_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setPlatformFee(POOL_ADDRESS, 20_00);
-
-        vm.prank(GOVERNOR);
-        globals.setPlatformFee(POOL_ADDRESS, 20_00);
-    }
-
-    function test_setPlatformFee_outOfBounds() external {
-        vm.startPrank(GOVERNOR);
-
-        vm.expectRevert("MG:SPF:FEE_GT_100");
-        globals.setPlatformFee(POOL_ADDRESS, 100_01);
-
-        globals.setPlatformFee(POOL_ADDRESS, 100_00);
-    }
-
-    function test_setPlatformFee() external {
-        assertEq(globals.platformFee(POOL_ADDRESS), 0);
-
-        vm.prank(GOVERNOR);
-        globals.setPlatformFee(POOL_ADDRESS, 20_00);
-
-        assertEq(globals.platformFee(POOL_ADDRESS), 20_00);
+        assertEq(globals.platformServiceFeeRate(POOL_ADDRESS), 0.2e18);
     }
 
 }
