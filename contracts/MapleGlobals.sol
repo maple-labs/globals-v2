@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.7;
 
+import { console } from "../modules/contract-test-utils/contracts/test.sol";
+
 import { NonTransparentProxied } from "../modules/non-transparent-proxy/contracts/NonTransparentProxied.sol";
 
-import { IMapleGlobals }               from "./interfaces/IMapleGlobals.sol";
-import { IPoolLike, IPoolManagerLike } from "./interfaces/Interfaces.sol";
+import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
+
+import {
+    IChainlinkAggregatorV3Like,
+    IPoolLike,
+    IPoolManagerLike
+} from "./interfaces/Interfaces.sol";
 
 // TODO: Natspec
 // TODO: Timelocks?
@@ -34,12 +41,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     bool public override protocolPaused;
 
+    mapping(address => address) public override oracleFor;
+
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isPoolAsset;
     mapping(address => bool) public override isPoolDeployer;
 
     mapping(address => uint256) public override adminFeeSplit;
     mapping(address => uint256) public override managementFeeSplit;
+    mapping(address => uint256) public override manualOverridePrice;
     mapping(address => uint256) public override maxCoverLiquidationPercent;
     mapping(address => uint256) public override minCoverAmount;
     mapping(address => uint256) public override originationFeeSplit;
@@ -79,23 +89,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         pendingGovernor = pendingGovernor_;
     }
 
-    /**********************/
-    /*** View Functions ***/
-    /**********************/
-
-    // TODO: Add setter for updating the governor address.
-    function governor() external view override returns (address governor_) {
-        governor_ = admin();
-    }
-
-    function isPoolDelegate(address account_) external view override returns (bool isPoolDelegate_) {
-        isPoolDelegate_ = poolDelegate[account_].isPoolDelegate;
-    }
-
-    function ownedPool(address account_) external view override returns (address pool_) {
-        pool_ = poolDelegate[account_].ownedPool;
-    }
-
     /***********************/
     /*** Address Setters ***/
     /***********************/
@@ -115,18 +108,22 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         mapleTreasury = mapleTreasury_;
     }
 
+    function setPriceOracle(address asset_, address oracle_) external override isGovernor {
+        oracleFor[asset_] = oracle_;
+    }
+
     function setSecurityAdmin(address securityAdmin_) external override isGovernor {
         securityAdmin = securityAdmin_;
     }
 
     /***********************/
     /*** Boolean Setters ***/
-    /***********************/  
+    /***********************/
 
     function setProtocolPause(bool protocolPaused_) external override {
         require(msg.sender == securityAdmin, "MG:SPP:NOT_SECURITY_ADMIN");
         protocolPaused = protocolPaused_;
-    } 
+    }
 
     /*************************/
     /*** Allowlist Setters ***/
@@ -157,6 +154,14 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function setValidPoolDeployer(address poolDeployer_, bool isValid_) external override isGovernor {
         isPoolDeployer[poolDeployer_] = isValid_;
+    }
+
+    /*********************/
+    /*** Price Setters ***/
+    /*********************/
+
+    function setManualOverridePrice(address asset_, uint256 price_) external override isGovernor {
+        manualOverridePrice[asset_] = price_;
     }
 
     /*********************/
@@ -220,6 +225,36 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function scheduleCall(bytes32 functionId_) external override {
         callSchedule[functionId_][msg.sender] = block.timestamp + minTimelock[functionId_];
+    }
+
+    /**********************/
+    /*** View Functions ***/
+    /**********************/
+
+    function getLatestPrice(address asset_) external override view returns (uint256) {
+        // If governor has overriden price because of oracle outage, return overriden price.
+        if (manualOverridePrice[asset_] != 0) return manualOverridePrice[asset_];
+
+        ( uint80 roundId_, int256 price_, , uint256 updatedAt_, uint80 answeredInRound_ ) = IChainlinkAggregatorV3Like(oracleFor[asset_]).latestRoundData();
+
+        require(updatedAt_ != 0,              "MG:GLP:ROUND_NOT_COMPLETE");
+        require(answeredInRound_ >= roundId_, "MG:GLP:STALE_DATA");
+        require(price_ != int256(0),          "MG:GLP:ZERO_PRICE");
+
+        return uint256(price_);
+    }
+
+    // TODO: Add setter for updating the governor address.
+    function governor() external view override returns (address governor_) {
+        governor_ = admin();
+    }
+
+    function isPoolDelegate(address account_) external view override returns (bool isPoolDelegate_) {
+        isPoolDelegate_ = poolDelegate[account_].isPoolDelegate;
+    }
+
+    function ownedPool(address account_) external view override returns (address pool_) {
+        pool_ = poolDelegate[account_].ownedPool;
     }
 
     /************************/

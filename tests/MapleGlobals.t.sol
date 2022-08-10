@@ -6,7 +6,7 @@ import { NonTransparentProxy } from "../modules/non-transparent-proxy/contracts/
 
 import { MapleGlobals } from "../contracts/MapleGlobals.sol";
 
-import { MockPool, MockPoolManager } from "./mocks/Mocks.sol";
+import { MockChainlinkOracle, MockPool, MockPoolManager } from "./mocks/Mocks.sol";
 
 contract BaseMapleGlobalsTest is TestUtils {
 
@@ -75,6 +75,26 @@ contract SetMapleTreasuryTests is BaseMapleGlobalsTest {
         globals.setMapleTreasury(SET_ADDRESS);
 
         assertEq(globals.mapleTreasury(), SET_ADDRESS);
+    }
+
+}
+
+contract SetPriceOracleTests is BaseMapleGlobalsTest {
+
+    address ASSET = address(new Address());
+
+    function test_setPriceOracle_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setPriceOracle(ASSET, SET_ADDRESS);
+    }
+
+    function test_setPriceOracle() external {
+        assertEq(globals.oracleFor(ASSET), address(0));
+
+        vm.prank(GOVERNOR);
+        globals.setPriceOracle(ASSET, SET_ADDRESS);
+
+        assertEq(globals.oracleFor(ASSET), SET_ADDRESS);
     }
 
 }
@@ -257,6 +277,44 @@ contract SetValidPoolDeployer is BaseMapleGlobalsTest {
         assertTrue(!globals.isPoolDeployer(SET_ADDRESS));
     }
 }
+
+/*********************/
+/*** Price Setters ***/
+/*********************/
+
+contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
+
+    address ASSET = address(new Address());
+
+    function test_setManualOverridePrice_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setManualOverridePrice(ASSET, 100);
+
+        vm.prank(GOVERNOR);
+        globals.setManualOverridePrice(ASSET, 100);
+    }
+
+    function test_setManualOverridePrice() external {
+        MockChainlinkOracle oracle = new MockChainlinkOracle();
+
+        oracle.__setUpdatedAt(1);
+        oracle.__setRoundId(1);
+        oracle.__setAnsweredInRound(1);
+        oracle.__setPrice(100);
+
+        vm.prank(GOVERNOR);
+        globals.setPriceOracle(ASSET, address(oracle));
+
+        assertEq(globals.getLatestPrice(ASSET), 100);
+
+        vm.prank(GOVERNOR);
+        globals.setManualOverridePrice(ASSET, 200);
+
+        assertEq(globals.getLatestPrice(ASSET), 200);
+    }
+
+}
+
 
 /*********************/
 /*** Cover Setters ***/
@@ -545,6 +603,81 @@ contract ScheduleCallTests is BaseMapleGlobalsTest {
         globals.scheduleCall("WITHDRAWAL_MANAGER:SET_COOLDOWN");
 
         assertEq(globals.callSchedule("WITHDRAWAL_MANAGER:SET_COOLDOWN", GOVERNOR), block.timestamp);
+    }
+
+}
+
+/************************/
+/*** Getter Functions ***/
+/************************/
+
+contract GetLatestPriceTests is BaseMapleGlobalsTest {
+
+    address ASSET = address(new Address());
+
+    MockChainlinkOracle oracle = new MockChainlinkOracle();
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.prank(GOVERNOR);
+        globals.setPriceOracle(ASSET, address(oracle));
+    }
+
+    function test_getLatestPrice_roundNotComplete() external {
+        vm.expectRevert("MG:GLP:ROUND_NOT_COMPLETE");
+        globals.getLatestPrice(ASSET);
+    }
+
+    function test_getLatestPrice_staleData() external {
+        oracle.__setUpdatedAt(1);
+        oracle.__setRoundId(1);  // `answeredInRound_` is 0.
+
+        vm.expectRevert("MG:GLP:STALE_DATA");
+        globals.getLatestPrice(ASSET);
+    }
+
+    function test_getLatestPrice_zeroPrice() external {
+        oracle.__setUpdatedAt(1);
+        oracle.__setRoundId(1);
+        oracle.__setAnsweredInRound(1);
+
+        vm.expectRevert("MG:GLP:ZERO_PRICE");
+        globals.getLatestPrice(ASSET);
+    }
+
+    function test_getLatestPrice() external {
+        oracle.__setUpdatedAt(1);
+        oracle.__setRoundId(1);
+        oracle.__setAnsweredInRound(1);
+
+        oracle.__setPrice(100);
+
+        assertEq(globals.getLatestPrice(ASSET), 100);
+
+        oracle.__setPrice(200);
+
+        assertEq(globals.getLatestPrice(ASSET), 200);
+    }
+
+    function test_getLatestPrice_manualOverride() external {
+        oracle.__setUpdatedAt(1);
+        oracle.__setRoundId(1);
+        oracle.__setAnsweredInRound(1);
+
+        oracle.__setPrice(100);
+
+        assertEq(globals.getLatestPrice(ASSET), 100);
+
+        vm.prank(GOVERNOR);
+        globals.setManualOverridePrice(ASSET, 200);
+
+        assertEq(globals.getLatestPrice(ASSET), 200);
+
+        vm.prank(GOVERNOR);
+        globals.setManualOverridePrice(ASSET, 0);
+
+        assertEq(globals.getLatestPrice(ASSET), 100);
     }
 
 }

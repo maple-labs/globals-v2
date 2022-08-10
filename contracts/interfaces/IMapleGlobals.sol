@@ -21,9 +21,13 @@ interface IMapleGlobals {
 
     function isPoolDeployer(address account_) external view returns (bool isValid_);
 
+    function getLatestPrice(address asset_) external view returns (uint256 price_);
+
     function governor() external view returns (address governor_);
 
     function managementFeeSplit(address pool_) external view returns (uint256 managementFeeSplit_);
+
+    function manualOverridePrice(address asset_) external view returns (uint256 manualOverridePrice_);
 
     function mapleTreasury() external view returns (address governor_);
 
@@ -36,6 +40,8 @@ interface IMapleGlobals {
     function minTimelock(bytes32 functionId_) external view returns (uint256 minTimelock);
 
     function minValue(address pool_, bytes32 paramId_) external view returns (uint256 minValue_);
+
+    function oracleFor(address asset_) external view returns (address oracle_);
 
     function originationFeeSplit(address pool_) external view returns (uint256 originationFeeSplit_);
 
@@ -56,8 +62,10 @@ interface IMapleGlobals {
     function activatePool(address pool_) external;
 
     function setMapleTreasury(address mapleTreasury_) external;
-    
-    function setSecurityAdmin(address securityAdmin_) external; 
+
+    function setPriceOracle(address asset_, address priceOracle_) external;
+
+    function setSecurityAdmin(address securityAdmin_) external;
 
     /***********************/
     /*** Boolean Setters ***/
@@ -78,6 +86,12 @@ interface IMapleGlobals {
     function setValidPoolDelegate(address poolDelegate_, bool isValid_) external;
 
     function setValidPoolDeployer(address poolDeployer_, bool isValid_) external;
+
+    /*********************/
+    /*** Price Setters ***/
+    /*********************/
+
+    function setManualOverridePrice(address asset_, uint256 price_) external;
 
     /*********************/
     /*** Cover Setters ***/

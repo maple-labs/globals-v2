@@ -1,6 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.7;
 
+interface IChainlinkAggregatorV3Like {
+
+    function latestRoundData()
+        external
+        view
+        returns (
+            uint80  roundId_,
+            int256  price_,
+            uint256 startedAt_,
+            uint256 updatedAt_,
+            uint80  answeredInRound_
+        );
+
+}
+
 interface IPoolLike {
 
     function manager() external view returns (address manager_);
