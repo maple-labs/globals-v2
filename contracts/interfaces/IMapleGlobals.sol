@@ -39,7 +39,7 @@ interface IMapleGlobals {
 
     function oracleFor(address asset_) external view returns (address oracle_);
 
-    function ownedPool(address account_) external view returns (address pool_);
+    function ownedPoolManager(address account_) external view returns (address pool_);
 
     function pendingGovernor() external view returns (address pendingGovernor_);
 

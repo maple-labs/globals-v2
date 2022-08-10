@@ -40,23 +40,12 @@ contract MockChainlinkOracle {
 
 }
 
-
-contract MockPool {
-
-    address public manager;
-
-    constructor(address manager_) {
-        manager = manager_;
-    }
-
-}
-
 contract MockPoolManager {
 
-    address public admin;
+    address public poolDelegate;
 
-    constructor(address admin_) {
-        admin = admin_;
+    constructor(address poolDelegate_) {
+        poolDelegate = poolDelegate_;
     }
 
     function setActive(bool active_) external { }

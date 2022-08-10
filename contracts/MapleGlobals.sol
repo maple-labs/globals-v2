@@ -27,7 +27,7 @@ import {
 contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     struct PoolDelegate {
-        address ownedPool;
+        address ownedPoolManager;
         bool    isPoolDelegate;
     }
 
@@ -94,13 +94,12 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Address Setters ***/
     /***********************/
 
-    function activatePool(address pool_) external override isGovernor {
-        address manager_ = IPoolLike(pool_).manager();
-        address admin_   = IPoolManagerLike(manager_).admin();
+    function activatePool(address poolManager_) external override isGovernor {
+        address poolDelegate_ = IPoolManagerLike(poolManager_).poolDelegate();
 
-        poolDelegate[admin_].ownedPool = pool_;
+        poolDelegate[poolDelegate_].ownedPoolManager = poolManager_;
 
-        IPoolManagerLike(manager_).setActive(true);
+        IPoolManagerLike(poolManager_).setActive(true);
 
         // Note: minCoverAmount is not enforced at activation time.
     }
@@ -147,7 +146,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
         // Can only remove pool delegates once they no longer own a pool.
         if (!isValid_) {
-            require(poolDelegate[account_].ownedPool == address(0), "MG:SVPD:OWNS_POOL");
+            require(poolDelegate[account_].ownedPoolManager == address(0), "MG:SVPD:OWNS_POOL");
         }
 
         poolDelegate[account_].isPoolDelegate = isValid_;
@@ -169,42 +168,42 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Cover Setters ***/
     /*********************/
 
-    function setMinCoverAmount(address pool_, uint256 minCoverAmount_) external override isGovernor {
-        minCoverAmount[pool_] = minCoverAmount_;
+    function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override isGovernor {
+        minCoverAmount[poolManager_] = minCoverAmount_;
     }
 
-    function setMaxCoverLiquidationPercent(address pool_, uint256 maxCoverLiquidationPercent_) external override isGovernor {
+    function setMaxCoverLiquidationPercent(address poolManager_, uint256 maxCoverLiquidationPercent_) external override isGovernor {
         require(maxCoverLiquidationPercent_ <= HUNDRED_PERCENT, "MG:SMCLP:GT_100");
 
-        maxCoverLiquidationPercent[pool_] = maxCoverLiquidationPercent_;
+        maxCoverLiquidationPercent[poolManager_] = maxCoverLiquidationPercent_;
     }
 
     /*******************/
     /*** Fee Setters ***/
     /*******************/
 
-    function setPlatformManagementFeeRate(address pool_, uint256 platformManagementFeeRate_) external override isGovernor {
+    function setPlatformManagementFeeRate(address poolManager_, uint256 platformManagementFeeRate_) external override isGovernor {
         require(platformManagementFeeRate_ <= HUNDRED_PERCENT, "MG:SPMFR:RATE_GT_100");
-        platformManagementFeeRate[pool_] = platformManagementFeeRate_;
+        platformManagementFeeRate[poolManager_] = platformManagementFeeRate_;
     }
 
-    function setPlatformOriginationFeeRate(address pool_, uint256 platformOriginationFeeRate_) external override isGovernor {
+    function setPlatformOriginationFeeRate(address poolManager_, uint256 platformOriginationFeeRate_) external override isGovernor {
         require(platformOriginationFeeRate_ <= HUNDRED_PERCENT, "MG:SPOFR:RATE_GT_100");
-        platformOriginationFeeRate[pool_] = platformOriginationFeeRate_;
+        platformOriginationFeeRate[poolManager_] = platformOriginationFeeRate_;
     }
 
-    function setPlatformServiceFeeRate(address pool_, uint256 platformServiceFeeRate_) external override isGovernor {
+    function setPlatformServiceFeeRate(address poolManager_, uint256 platformServiceFeeRate_) external override isGovernor {
         require(platformServiceFeeRate_ <= HUNDRED_PERCENT, "MG:SPSFR:RATE_GT_100");
-        platformServiceFeeRate[pool_] = platformServiceFeeRate_;
+        platformServiceFeeRate[poolManager_] = platformServiceFeeRate_;
     }
 
     /*********************/
     /*** Range Setters ***/
     /*********************/
 
-    function setRange(address pool_, bytes32 paramId_, uint256 minValue_, uint256 maxValue_) external override isGovernor {
-        minValue[pool_][paramId_] = minValue_;
-        maxValue[pool_][paramId_] = maxValue_;
+    function setRange(address poolManager_, bytes32 paramId_, uint256 minValue_, uint256 maxValue_) external override isGovernor {
+        minValue[poolManager_][paramId_] = minValue_;
+        maxValue[poolManager_][paramId_] = maxValue_;
     }
 
     /************************/
@@ -249,8 +248,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         isPoolDelegate_ = poolDelegate[account_].isPoolDelegate;
     }
 
-    function ownedPool(address account_) external view override returns (address pool_) {
-        pool_ = poolDelegate[account_].ownedPool;
+    function ownedPoolManager(address account_) external view override returns (address poolManager_) {
+        poolManager_ = poolDelegate[account_].ownedPoolManager;
     }
 
     /************************/
