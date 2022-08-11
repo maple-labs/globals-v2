@@ -18,17 +18,17 @@ contract BaseMapleGlobalsTest is TestUtils {
     MapleGlobals globals;
 
     function setUp() public virtual {
-        implementation = address(new MapleGlobals());
+        implementation = address(new MapleGlobals(2 weeks, 2 days));
         globals        = MapleGlobals(address(new NonTransparentProxy(GOVERNOR, address(implementation))));
     }
 
 }
 
-/***********************/
-/*** Address Setters ***/
-/***********************/
+/***********************************/
+/*** Governor Transfer Functions ***/
+/***********************************/
 
-contract AcceptGovernorTests is BaseMapleGlobalsTest {
+contract TransferGovernorTests is BaseMapleGlobalsTest {
 
     bytes32 constant ADMIN_SLOT = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
 
@@ -57,6 +57,35 @@ contract AcceptGovernorTests is BaseMapleGlobalsTest {
         assertEq(globals.admin(),           SET_ADDRESS);
         assertEq(globals.governor(),        SET_ADDRESS);
         assertEq(globals.pendingGovernor(), address(0));
+    }
+
+}
+
+/**********************/
+/*** Global Setters ***/
+/**********************/
+
+contract ActivatePoolTests is BaseMapleGlobalsTest {
+
+    address admin = address(new Address());
+
+    MockPoolManager manager = new MockPoolManager(admin);
+
+    function test_activatePoolManager_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.activatePoolManager(address(manager));
+
+        vm.prank(GOVERNOR);
+        globals.activatePoolManager(address(manager));
+    }
+
+    function test_activatePoolManager_success() external {
+        assertEq(globals.ownedPoolManager(admin), address(0));
+
+        vm.prank(GOVERNOR);
+        globals.activatePoolManager(address(manager));
+
+        assertEq(globals.ownedPoolManager(admin), address(manager));
     }
 
 }
@@ -131,6 +160,25 @@ contract SetSecurityAdminTests is BaseMapleGlobalsTest {
         globals.setSecurityAdmin(SET_ADDRESS);
 
         assertEq(globals.securityAdmin(), SET_ADDRESS);
+    }
+
+}
+
+contract SetDefaultTimelockParametersTests is BaseMapleGlobalsTest {
+
+    function test_setDefaultTimelockParameters_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setDefaultTimelockParameters(0, 0);
+    }
+
+    function test_setDefaultTimelockParameters() external {
+        vm.prank(GOVERNOR);
+        globals.setDefaultTimelockParameters(1, 2);
+
+        ( uint128 delay, uint128 duration ) = globals.defaultTimelockParameters();
+
+        assertEq(delay,    1);
+        assertEq(duration, 2);
     }
 
 }
@@ -472,85 +520,132 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
 }
 
-/*******************************/
-/*** Pool Activation Setters ***/
-/*******************************/
+/**********************************/
+/*** Contract Control Functions ***/
+/**********************************/
 
-contract ActivatePoolTests is BaseMapleGlobalsTest {
+contract SetTimelockWindowTests is BaseMapleGlobalsTest {
 
-    address admin = address(13);
+    address internal CONTRACT      = address(new Address());
+    address internal POOL_DELEGATE = address(new Address());
 
-    MockPoolManager manager = new MockPoolManager(admin);
+    bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
+    bytes32 internal constant FUNCTION_ID_2 = "FUNCTION_ID_2";
 
-    function test_activatePool_notGovernor() external {
+    MockPoolManager manager = new MockPoolManager(POOL_DELEGATE);
+
+    function test_setTimelockWindow_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.activatePool(address(manager));
-
-        vm.prank(GOVERNOR);
-        globals.activatePool(address(manager));
+        globals.setTimelockWindow(CONTRACT, FUNCTION_ID_1, 20 days, 1 days);
     }
 
-    function test_activatePool_success() external {
-        assertEq(globals.ownedPoolManager(admin), address(0));
+    function test_setTimelockWindow() external {
+        ( uint128 delay, uint128 duration ) = globals.timelockParametersOf(CONTRACT, FUNCTION_ID_1);
+
+        assertEq(delay,    0);
+        assertEq(duration, 0);
 
         vm.prank(GOVERNOR);
-        globals.activatePool(address(manager));
+        globals.setTimelockWindow(CONTRACT, FUNCTION_ID_1, 20 days, 1 days);
 
-        assertEq(globals.ownedPoolManager(admin), address(manager));
+        ( delay, duration ) = globals.timelockParametersOf(CONTRACT, FUNCTION_ID_1);
+
+        assertEq(delay,    20 days);
+        assertEq(duration, 1 days);
+    }
+
+    function test_setTimelockWindows_notGovernor() external {
+        bytes32[] memory functionIds = new bytes32[](2);
+
+        uint128[] memory delays = new uint128[](2);
+
+        uint128[] memory durations = new uint128[](2);
+
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setTimelockWindows(CONTRACT, functionIds, delays, durations);
+    }
+
+    function test_setTimelockWindows() external {
+        ( uint128 delay, uint128 duration ) = globals.timelockParametersOf(CONTRACT, FUNCTION_ID_1);
+
+        assertEq(delay,    0);
+        assertEq(duration, 0);
+
+        ( delay, duration ) = globals.timelockParametersOf(CONTRACT, FUNCTION_ID_2);
+
+        assertEq(delay,    0);
+        assertEq(duration, 0);
+
+        bytes32[] memory functionIds = new bytes32[](2);
+        functionIds[0] = FUNCTION_ID_1;
+        functionIds[1] = FUNCTION_ID_2;
+
+        uint128[] memory delays = new uint128[](2);
+        delays[0] = 10 days;
+        delays[1] = 20 days;
+
+        uint128[] memory durations = new uint128[](2);
+        durations[0] = 1 days;
+        durations[1] = 2 days;
+
+        vm.prank(GOVERNOR);
+        globals.setTimelockWindows(CONTRACT, functionIds, delays, durations);
+
+        ( delay, duration ) = globals.timelockParametersOf(CONTRACT, FUNCTION_ID_1);
+
+        assertEq(delay,    10 days);
+        assertEq(duration, 1 days);
+
+        ( delay, duration ) = globals.timelockParametersOf(CONTRACT, FUNCTION_ID_2);
+
+        assertEq(delay,    20 days);
+        assertEq(duration, 2 days);
     }
 
 }
 
-/*********************/
-/*** Range Setters ***/
-/*********************/
+contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
 
-contract SetRangeTests is BaseMapleGlobalsTest {
+    address internal POOL_DELEGATE_1 = address(new Address());
+    address internal POOL_DELEGATE_2 = address(new Address());
 
-    address constant PM_ADDRESS = address(3);
+    MockPoolManager manager = new MockPoolManager(POOL_DELEGATE_1);
 
-    function test_setRange_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setRange(PM_ADDRESS, "LIQUIDITY_CAP", 1, 100_000_000e6);
-
+    function setUp() public override {
+        super.setUp();
         vm.prank(GOVERNOR);
-        globals.setRange(PM_ADDRESS, "LIQUIDITY_CAP", 1, 100_000_000e6);
+        globals.activatePoolManager(address(manager));
     }
 
-    function test_setRange() external {
-        assertEq(globals.minValue(PM_ADDRESS, "LIQUIDITY_CAP"), 0);
-        assertEq(globals.maxValue(PM_ADDRESS, "LIQUIDITY_CAP"), 0);
-
-        vm.prank(GOVERNOR);
-        globals.setRange(PM_ADDRESS, "LIQUIDITY_CAP", 1, 100_000_000e6);
-
-        assertEq(globals.minValue(PM_ADDRESS, "LIQUIDITY_CAP"), 1);
-        assertEq(globals.maxValue(PM_ADDRESS, "LIQUIDITY_CAP"), 100_000_000e6);
+    function test_transferOwnedPool_notPoolManager() external {
+        vm.expectRevert("MG:TOPM:NOT_AUTHORIZED");
+        globals.transferOwnedPoolManager(POOL_DELEGATE_1, POOL_DELEGATE_2);
     }
 
-}
-
-/************************/
-/*** Timelock Setters ***/
-/************************/
-
-contract SetMinTimelockTests is BaseMapleGlobalsTest {
-
-    function test_setMinTimelock_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setMinTimelock("WITHDRAWAL_MANAGER:SET_COOLDOWN", 20 days);
-
-        vm.prank(GOVERNOR);
-        globals.setMinTimelock("WITHDRAWAL_MANAGER:SET_COOLDOWN", 20 days);
+    function test_transferOwnedPool_notPoolDelegate() external {
+        vm.prank(address(manager));
+        vm.expectRevert("MG:TOPM:NOT_POOL_DELEGATE");
+        globals.transferOwnedPoolManager(POOL_DELEGATE_1, POOL_DELEGATE_2);
     }
 
-    function test_setMinTimelock() external {
-        assertEq(globals.minTimelock("WITHDRAWAL_MANAGER:SET_COOLDOWN"), 0);
+    function test_transferOwnedPool() external {
+        ( address ownedPoolManager1, ) = globals.poolDelegates(POOL_DELEGATE_1);
+        ( address ownedPoolManager2, ) = globals.poolDelegates(POOL_DELEGATE_2);
+
+        assertEq(ownedPoolManager1, address(manager));
+        assertEq(ownedPoolManager2, address(0));
 
         vm.prank(GOVERNOR);
-        globals.setMinTimelock("WITHDRAWAL_MANAGER:SET_COOLDOWN", 20 days);
+        globals.setValidPoolDelegate(POOL_DELEGATE_2, true);
 
-        assertEq(globals.minTimelock("WITHDRAWAL_MANAGER:SET_COOLDOWN"), 20 days);
+        vm.prank(address(manager));
+        globals.transferOwnedPoolManager(POOL_DELEGATE_1, POOL_DELEGATE_2);
+
+        ( ownedPoolManager1, ) = globals.poolDelegates(POOL_DELEGATE_1);
+        ( ownedPoolManager2, ) = globals.poolDelegates(POOL_DELEGATE_2);
+
+        assertEq(ownedPoolManager1, address(0));
+        assertEq(ownedPoolManager2, address(manager));
     }
 
 }
@@ -561,15 +656,145 @@ contract SetMinTimelockTests is BaseMapleGlobalsTest {
 
 contract ScheduleCallTests is BaseMapleGlobalsTest {
 
+    address internal CONTRACT = address(new Address());
+
+    bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
+
+    uint256 start;
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.prank(GOVERNOR);
+        globals.setTimelockWindow(CONTRACT, FUNCTION_ID_1, 20 days, 1 days);
+
+        start = block.timestamp;
+    }
+
+    function test_scheduleCall_defaultState() external {
+        ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, uint256(0));
+        assertEq(dataHash,  bytes32(0));
+    }
+
     function test_scheduleCall() external {
-        vm.startPrank(GOVERNOR);
-        vm.warp(10000);
+        ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
-        assertEq(globals.callSchedule("WITHDRAWAL_MANAGER:SET_COOLDOWN", GOVERNOR), 0);
+        assertEq(timestamp, uint256(0));
+        assertEq(dataHash,  bytes32(0));
 
-        globals.scheduleCall("WITHDRAWAL_MANAGER:SET_COOLDOWN");
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
 
-        assertEq(globals.callSchedule("WITHDRAWAL_MANAGER:SET_COOLDOWN", GOVERNOR), block.timestamp);
+        ( timestamp, dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, block.timestamp);
+        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+    }
+
+    function test_scheduleCal_overwrite() external {
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
+
+        vm.warp(start + 1 days);
+
+        ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, start);
+        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some more call data");
+
+        ( timestamp, dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, start + 1 days);
+        assertEq(dataHash,  keccak256(abi.encode("some more call data")));
+    }
+
+}
+
+contract IsValidScheduledCallTests is BaseMapleGlobalsTest {
+
+    address internal CONTRACT = address(new Address());
+
+    bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.prank(GOVERNOR);
+        globals.setTimelockWindow(CONTRACT, FUNCTION_ID_1, 20 days, 1 days);
+    }
+
+    function test_isValidScheduledCall() external {
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
+
+        vm.warp(block.timestamp + 20 days - 1);
+
+        assertTrue(!globals.isValidScheduledCall(address(this), CONTRACT, FUNCTION_ID_1, "some call data"));
+
+        vm.warp(block.timestamp + 1);
+
+        assertTrue(globals.isValidScheduledCall(address(this),CONTRACT, FUNCTION_ID_1, "some call data"));
+
+        vm.warp(block.timestamp + 1 days);
+
+        assertTrue(globals.isValidScheduledCall(address(this),CONTRACT, FUNCTION_ID_1, "some call data"));
+
+        vm.warp(block.timestamp + 1);
+
+        assertTrue(!globals.isValidScheduledCall(address(this),CONTRACT, FUNCTION_ID_1, "some call data"));
+    }
+
+}
+
+contract UnScheduleCallTests is BaseMapleGlobalsTest {
+
+    address internal CONTRACT = address(new Address());
+
+    bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.prank(GOVERNOR);
+        globals.setTimelockWindow(CONTRACT, FUNCTION_ID_1, 20 days, 1 days);
+
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
+    }
+
+    function test_unscheduleCall() external {
+        ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, block.timestamp);
+        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+
+        vm.prank(CONTRACT);
+        globals.unscheduleCall(address(this), FUNCTION_ID_1, "some call data");
+
+        ( timestamp, dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, uint256(0));
+        assertEq(dataHash,  bytes32(0));
+    }
+
+    function test_unscheduleCall_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "some call data");
+    }
+
+    function test_unscheduleCall_asGovernor() external {
+        ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, block.timestamp);
+        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+
+        vm.prank(GOVERNOR);
+        globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "some call data");
+
+        ( timestamp, dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, uint256(0));
+        assertEq(dataHash,  bytes32(0));
     }
 
 }

@@ -14,21 +14,22 @@ import {
 } from "./interfaces/Interfaces.sol";
 
 // TODO: Natspec
-// TODO: Timelocks?
-// TODO: Figure out how to make pool delegate only manage one pool per address
-//       `setFinalizedPool` that writes to a mapping in globals storage?
-//       That way we can check the mapping during pool instantiation to check if the PD is:
-//       1. Allowlisted
-//       2. Not already managing a pool
-// TODO: Should the governor be able to update minTimelock during the timelock of the call?
-//       Or should we save it on schedule?
-// NOTE: It will be crucial to check that values that are returned from globals are not zero in case of a bad key being passed in.
 
 contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     struct PoolDelegate {
         address ownedPoolManager;
         bool    isPoolDelegate;
+    }
+
+    struct TimelockParameters {
+        uint128 delay;
+        uint128 duration;
+    }
+
+    struct ScheduledCall {
+        uint256 timestamp;
+        bytes32 dataHash;
     }
 
     /***************/
@@ -43,6 +44,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     bool public override protocolPaused;
 
+    TimelockParameters public override defaultTimelockParameters;
+
     mapping(address => address) public override oracleFor;
 
     mapping(address => bool) public override isBorrower;
@@ -56,16 +59,18 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(address => uint256) public override platformOriginationFeeRate;
     mapping(address => uint256) public override platformServiceFeeRate;
 
-    mapping(bytes32 => uint256) public override minTimelock;
-
-    mapping(address => mapping(bytes32 => uint256)) public override maxValue;
-    mapping(address => mapping(bytes32 => uint256)) public override minValue;
+    mapping(address => mapping(bytes32 => TimelockParameters)) public override timelockParametersOf;
 
     mapping(bytes32 => mapping(address => bool)) public override isFactory;
 
-    mapping(bytes32 => mapping(address => uint256)) public override callSchedule;
+    // Timestamp and call data hash for a caller, on a contract, for a function id.
+    mapping(address => mapping(address => mapping(bytes32 => ScheduledCall))) public override scheduledCalls;
 
-    mapping(address => PoolDelegate) public poolDelegate;
+    mapping(address => PoolDelegate) public override poolDelegates;
+
+    constructor(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) {
+        defaultTimelockParameters = TimelockParameters(defaultTimelockDelay_, defaultTimelockDuration_);
+    }
 
     /*****************/
     /*** Modifiers ***/
@@ -84,27 +89,27 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOVERNOR");
         _setAddress(ADMIN_SLOT, msg.sender);
         pendingGovernor = address(0);
+        emit GovernorshipAccepted(admin(), msg.sender);
     }
 
     function setPendingGovernor(address pendingGovernor_) external isGovernor {
-        pendingGovernor = pendingGovernor_;
+        emit PendingGovernorSet(pendingGovernor = pendingGovernor_);
     }
 
-    /***********************/
-    /*** Address Setters ***/
-    /***********************/
+    /**********************/
+    /*** Global Setters ***/
+    /**********************/
 
-    function activatePool(address poolManager_) external override isGovernor {
-        address poolDelegate_ = IPoolManagerLike(poolManager_).poolDelegate();
-
-        poolDelegate[poolDelegate_].ownedPoolManager = poolManager_;
-
+    // NOTE: `minCoverAmount` is not enforced at activation time.
+    function activatePoolManager(address poolManager_) external override isGovernor {
+        address delegate = IPoolManagerLike(poolManager_).poolDelegate();
+        emit PoolManagerActivated(poolManager_, delegate);
+        poolDelegates[delegate].ownedPoolManager = poolManager_;
         IPoolManagerLike(poolManager_).setActive(true);
-
-        // Note: minCoverAmount is not enforced at activation time.
     }
 
     function setMapleTreasury(address mapleTreasury_) external override isGovernor {
+        emit MapleTreasurySet(mapleTreasury, mapleTreasury_);
         mapleTreasury = mapleTreasury_;
     }
 
@@ -113,7 +118,13 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setSecurityAdmin(address securityAdmin_) external override isGovernor {
+        emit SecurityAdminSet(securityAdmin, securityAdmin_);
         securityAdmin = securityAdmin_;
+    }
+
+    function setDefaultTimelockParameters(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) external override isGovernor {
+        emit DefaultTimelockParametersSet(defaultTimelockParameters.delay, defaultTimelockDelay_, defaultTimelockParameters.duration, defaultTimelockDuration_);
+        defaultTimelockParameters = TimelockParameters(defaultTimelockDelay_, defaultTimelockDuration_);
     }
 
     /***********************/
@@ -123,6 +134,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function setProtocolPause(bool protocolPaused_) external override {
         require(msg.sender == securityAdmin, "MG:SPP:NOT_SECURITY_ADMIN");
         protocolPaused = protocolPaused_;
+        emit ProtocolPauseSet(msg.sender, protocolPaused_);
     }
 
     /*************************/
@@ -131,29 +143,29 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function setValidBorrower(address borrower_, bool isValid_) external override isGovernor {
         isBorrower[borrower_] = isValid_;
+        emit ValidBorrowerSet(borrower_, isValid_);
     }
 
     function setValidFactory(bytes32 factoryKey_, address factory_, bool isValid_) external override isGovernor {
         isFactory[factoryKey_][factory_] = isValid_;
+        emit ValidFactorySet(factoryKey_, factory_, isValid_);
     }
 
     function setValidPoolAsset(address poolAsset_, bool isValid_) external override isGovernor {
         isPoolAsset[poolAsset_] = isValid_;
+        emit ValidPoolAssetSet(poolAsset_, isValid_);
     }
 
     function setValidPoolDelegate(address account_, bool isValid_) external override isGovernor {
-        require(account_ != address(0), "MG:SVPD:ZERO_ADDRESS");
-
-        // Can only remove pool delegates once they no longer own a pool.
-        if (!isValid_) {
-            require(poolDelegate[account_].ownedPoolManager == address(0), "MG:SVPD:OWNS_POOL");
-        }
-
-        poolDelegate[account_].isPoolDelegate = isValid_;
+        require(account_ != address(0),                                             "MG:SVPD:ZERO_ADDRESS");
+        require(isValid_ || poolDelegates[account_].ownedPoolManager == address(0), "MG:SVPD:OWNS_POOL_MANAGER");  // Cannot remove pool delegates that own a pool manager.
+        poolDelegates[account_].isPoolDelegate = isValid_;
+        emit ValidPoolDelegateSet(account_, isValid_);
     }
 
     function setValidPoolDeployer(address poolDeployer_, bool isValid_) external override isGovernor {
         isPoolDeployer[poolDeployer_] = isValid_;
+        emit ValidPoolDeployerSet(poolDeployer_, isValid_);
     }
 
     /*********************/
@@ -170,12 +182,13 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override isGovernor {
         minCoverAmount[poolManager_] = minCoverAmount_;
+        emit MinCoverAmountSet(poolManager_, minCoverAmount_);
     }
 
     function setMaxCoverLiquidationPercent(address poolManager_, uint256 maxCoverLiquidationPercent_) external override isGovernor {
         require(maxCoverLiquidationPercent_ <= HUNDRED_PERCENT, "MG:SMCLP:GT_100");
-
         maxCoverLiquidationPercent[poolManager_] = maxCoverLiquidationPercent_;
+        emit MaxCoverLiquidationPercentSet(poolManager_, maxCoverLiquidationPercent_);
     }
 
     /*******************/
@@ -185,41 +198,89 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function setPlatformManagementFeeRate(address poolManager_, uint256 platformManagementFeeRate_) external override isGovernor {
         require(platformManagementFeeRate_ <= HUNDRED_PERCENT, "MG:SPMFR:RATE_GT_100");
         platformManagementFeeRate[poolManager_] = platformManagementFeeRate_;
+        emit PlatformManagementFeeRateSet(poolManager_, platformManagementFeeRate_);
     }
 
     function setPlatformOriginationFeeRate(address poolManager_, uint256 platformOriginationFeeRate_) external override isGovernor {
         require(platformOriginationFeeRate_ <= HUNDRED_PERCENT, "MG:SPOFR:RATE_GT_100");
         platformOriginationFeeRate[poolManager_] = platformOriginationFeeRate_;
+        emit PlatformOriginationFeeRateSet(poolManager_, platformOriginationFeeRate_);
     }
 
     function setPlatformServiceFeeRate(address poolManager_, uint256 platformServiceFeeRate_) external override isGovernor {
         require(platformServiceFeeRate_ <= HUNDRED_PERCENT, "MG:SPSFR:RATE_GT_100");
         platformServiceFeeRate[poolManager_] = platformServiceFeeRate_;
+        emit PlatformServiceFeeRateSet(poolManager_, platformServiceFeeRate_);
     }
 
-    /*********************/
-    /*** Range Setters ***/
-    /*********************/
+    /**********************************/
+    /*** Contract Control Functions ***/
+    /**********************************/
 
-    function setRange(address poolManager_, bytes32 paramId_, uint256 minValue_, uint256 maxValue_) external override isGovernor {
-        minValue[poolManager_][paramId_] = minValue_;
-        maxValue[poolManager_][paramId_] = maxValue_;
+    // TODO: isGovernor optimization on public function chaining.
+    function setTimelockWindow(address contract_, bytes32 functionId_, uint128 delay_, uint128 duration_) public override isGovernor {
+        timelockParametersOf[contract_][functionId_] = TimelockParameters(delay_, duration_);
+        emit TimelockWindowSet(contract_, functionId_, delay_, duration_);
     }
 
-    /************************/
-    /*** Timelock Setters ***/
-    /************************/
+    function setTimelockWindows(address contract_, bytes32[] calldata functionIds_, uint128[] calldata delays_, uint128[] calldata durations_) public override isGovernor {
+        for (uint256 i; i < functionIds_.length;) {
+            setTimelockWindow(contract_, functionIds_[i], delays_[i], durations_[i]);
+            unchecked { i++; }
+        }
+    }
 
-    function setMinTimelock(bytes32 functionId_, uint256 duration_) external override isGovernor {
-        minTimelock[functionId_] = duration_;
+    // TODO: Add transferOwnedPool function call in pool manager acceptPendingPoolDelegate.
+    function transferOwnedPoolManager(address fromPoolDelegate_, address toPoolDelegate_) external override {
+        PoolDelegate storage fromDelegate = poolDelegates[fromPoolDelegate_];
+        PoolDelegate storage toDelegate   = poolDelegates[toPoolDelegate_];
+
+        require(fromDelegate.ownedPoolManager == msg.sender, "MG:TOPM:NOT_AUTHORIZED");
+        require(toDelegate.isPoolDelegate,                   "MG:TOPM:NOT_POOL_DELEGATE");
+
+        fromDelegate.ownedPoolManager = address(0);
+        toDelegate.ownedPoolManager   = msg.sender;
+
+        emit PoolManagerOwnershipTransferred(fromPoolDelegate_, toPoolDelegate_, msg.sender);
     }
 
     /**************************/
     /*** Schedule Functions ***/
     /**************************/
 
-    function scheduleCall(bytes32 functionId_) external override {
-        callSchedule[functionId_][msg.sender] = block.timestamp + minTimelock[functionId_];
+    function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
+        bytes32 dataHash = keccak256(abi.encode(callData_));
+        scheduledCalls[msg.sender][contract_][functionId_] = ScheduledCall(block.timestamp, dataHash);
+        emit CallScheduled(msg.sender, contract_, functionId_, dataHash, block.timestamp);
+    }
+
+    function unscheduleCall(address caller_, bytes32 functionId_, bytes calldata callData_) external override {
+        delete scheduledCalls[caller_][msg.sender][functionId_];
+        emit CallUnscheduled(caller_, msg.sender, functionId_, keccak256(abi.encode(callData_)), block.timestamp);
+    }
+
+    function unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_) external override isGovernor {
+        delete scheduledCalls[caller_][contract_][functionId_];
+        emit CallUnscheduled(caller_, contract_, functionId_, keccak256(abi.encode(callData_)), block.timestamp);
+    }
+
+    function isValidScheduledCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_) public override view returns (bool isValid_) {
+        ScheduledCall      storage scheduledCall      = scheduledCalls[caller_][contract_][functionId_];
+        TimelockParameters storage timelockParameters = timelockParametersOf[contract_][functionId_];
+
+        uint256 timestamp = scheduledCall.timestamp;
+        uint128 delay     = timelockParameters.delay;
+        uint128 duration  = timelockParameters.duration;
+
+        if (duration == uint128(0)) {
+            delay    = defaultTimelockParameters.delay;
+            duration = defaultTimelockParameters.duration;
+        }
+
+        isValid_ =
+            (block.timestamp >= timestamp + delay) &&
+            (block.timestamp <= timestamp + delay + duration) &&
+            (keccak256(abi.encode(callData_)) == scheduledCall.dataHash);
     }
 
     /**********************/
@@ -239,26 +300,21 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         return uint256(price_);
     }
 
-    // TODO: Add setter for updating the governor address.
     function governor() external view override returns (address governor_) {
         governor_ = admin();
     }
 
     function isPoolDelegate(address account_) external view override returns (bool isPoolDelegate_) {
-        isPoolDelegate_ = poolDelegate[account_].isPoolDelegate;
+        isPoolDelegate_ = poolDelegates[account_].isPoolDelegate;
     }
 
     function ownedPoolManager(address account_) external view override returns (address poolManager_) {
-        poolManager_ = poolDelegate[account_].ownedPoolManager;
+        poolManager_ = poolDelegates[account_].ownedPoolManager;
     }
 
     /************************/
     /*** Helper Functions ***/
     /************************/
-
-    function _pastTimelock(bytes32 functionId_, address caller_) internal view returns (bool pastTimelock_) {
-        return block.timestamp >= callSchedule[functionId_][caller_];
-    }
 
     function _setAddress(bytes32 slot_, address value_) private {
         assembly {
