@@ -1,8 +1,7 @@
-name: REPOSITORY
-version: 1.0.0
+name: maple-globals
+version: 1.0.0-alpha.0
 source: contracts
 packages:
-  - path: contracts/SampleContract.sol
-    contractName: SammpleContract
-    customChecksum: 0x0000000000000000000000000000000000000000000000000000000000000000
-customDescription: Sample Artifacts and ABIs
+  - path: contracts/MapleGlobals.sol
+    contractName: MapleGlobals
+customDescription: Maple Globals Artifacts and ABIs
