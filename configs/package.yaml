@@ -1,7 +1,7 @@
-name: maple-globals
+name: globals-v2
 version: 1.0.0-alpha.0
 source: contracts
 packages:
   - path: contracts/MapleGlobals.sol
     contractName: MapleGlobals
-customDescription: Maple Globals Artifacts and ABIs
+customDescription: Maple Globals V2 Artifacts and ABIs
