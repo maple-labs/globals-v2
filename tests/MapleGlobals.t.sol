@@ -108,6 +108,24 @@ contract SetMapleTreasuryTests is BaseMapleGlobalsTest {
 
 }
 
+contract SetMigrationAdminTests is BaseMapleGlobalsTest {
+
+    function test_setMigrationAdmin_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setMigrationAdmin(SET_ADDRESS);
+    }
+
+    function test_setMigrationAdmin() external {
+        assertEq(globals.migrationAdmin(), address(0));
+
+        vm.prank(GOVERNOR);
+        globals.setMigrationAdmin(SET_ADDRESS);
+
+        assertEq(globals.migrationAdmin(), SET_ADDRESS);
+    }
+
+}
+
 contract SetPriceOracleTests is BaseMapleGlobalsTest {
 
     address ASSET = address(new Address());

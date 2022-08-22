@@ -39,6 +39,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     uint256 public constant HUNDRED_PERCENT = 1e18;
 
     address public override mapleTreasury;
+    address public override migrationAdmin;
     address public override pendingGovernor;
     address public override securityAdmin;
 
@@ -111,6 +112,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function setMapleTreasury(address mapleTreasury_) external override isGovernor {
         emit MapleTreasurySet(mapleTreasury, mapleTreasury_);
         mapleTreasury = mapleTreasury_;
+    }
+
+    function setMigrationAdmin(address migrationAdmin_) external override isGovernor {
+        emit MigrationAdminSet(migrationAdmin, migrationAdmin_);
+        migrationAdmin = migrationAdmin_;
     }
 
     function setPriceOracle(address asset_, address oracle_) external override isGovernor {

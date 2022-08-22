@@ -19,6 +19,8 @@ interface IMapleGlobals {
 
     event MaxCoverLiquidationPercentSet(address indexed poolManager_, uint256 maxCoverLiquidationPercent_);
 
+    event MigrationAdminSet(address indexed previousMigrationAdmin_, address indexed nextMigrationAdmin_);
+
     event MinCoverAmountSet(address indexed poolManager_, uint256 minCoverAmount_);
 
     event PendingGovernorSet(address indexed pendingGovernor_);
@@ -75,6 +77,8 @@ interface IMapleGlobals {
 
     function maxCoverLiquidationPercent(address poolManager_) external view returns (uint256 maxCoverLiquidationPercent_);
 
+    function migrationAdmin() external view returns (address migrationAdmin_);
+
     function minCoverAmount(address poolManager_) external view returns (uint256 minCoverAmount_);
 
     function oracleFor(address asset_) external view returns (address oracle_);
@@ -106,6 +110,8 @@ interface IMapleGlobals {
     function activatePoolManager(address poolManager_) external;
 
     function setMapleTreasury(address mapleTreasury_) external;
+
+    function setMigrationAdmin(address migrationAdmin_) external;
 
     function setPriceOracle(address asset_, address priceOracle_) external;
 
