@@ -402,9 +402,9 @@ contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
         uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
         vm.expectRevert("MG:SMCLP:GT_100");
-        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, hundredPercent + 1);
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_0001);
 
-        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, hundredPercent);
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_0000);
     }
 
     function test_setMaxCoverLiquidationPercent() external {
@@ -463,9 +463,9 @@ contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
         uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
         vm.expectRevert("MG:SPMFR:RATE_GT_100");
-        globals.setPlatformManagementFeeRate(PM_ADDRESS, hundredPercent + 1);
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, 100_0001);
 
-        globals.setPlatformManagementFeeRate(PM_ADDRESS, hundredPercent);
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, 100_0000);
     }
 
     function test_setPlatformManagementFeeRate() external {
@@ -497,9 +497,9 @@ contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
         uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
         vm.expectRevert("MG:SPOFR:RATE_GT_100");
-        globals.setPlatformOriginationFeeRate(PM_ADDRESS, hundredPercent + 1);
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 100_0001);
 
-        globals.setPlatformOriginationFeeRate(PM_ADDRESS, hundredPercent);
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 100_0000);
     }
 
     function test_setPlatformOriginationFeeRate() external {
@@ -531,9 +531,9 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
         uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
         vm.expectRevert("MG:SPSFR:RATE_GT_100");
-        globals.setPlatformServiceFeeRate(PM_ADDRESS, hundredPercent + 1);
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, 100_0001);
 
-        globals.setPlatformServiceFeeRate(PM_ADDRESS, hundredPercent);
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, 100_0000);
     }
 
     function test_setPlatformServiceFeeRate() external {
