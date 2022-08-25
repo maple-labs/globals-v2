@@ -398,10 +398,13 @@ contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
 
     function test_setMaxCoverLiquidationPercent_gt100() external {
         vm.startPrank(GOVERNOR);
-        vm.expectRevert("MG:SMCLP:GT_100");
-        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 1e18 + 1);
 
-        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 1e18);
+        uint256 hundredPercent = globals.HUNDRED_PERCENT();
+
+        vm.expectRevert("MG:SMCLP:GT_100");
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, hundredPercent + 1);
+
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, hundredPercent);
     }
 
     function test_setMaxCoverLiquidationPercent() external {
@@ -448,28 +451,30 @@ contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
     function test_setPlatformManagementFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setPlatformManagementFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, 20_0000);
 
         vm.prank(GOVERNOR);
-        globals.setPlatformManagementFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, 20_0000);
     }
 
     function test_setPlatformManagementFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        vm.expectRevert("MG:SPMFR:RATE_GT_100");
-        globals.setPlatformManagementFeeRate(PM_ADDRESS, 1e18 + 1);
+        uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
-        globals.setPlatformManagementFeeRate(PM_ADDRESS, 1e18);
+        vm.expectRevert("MG:SPMFR:RATE_GT_100");
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, hundredPercent + 1);
+
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, hundredPercent);
     }
 
     function test_setPlatformManagementFeeRate() external {
         assertEq(globals.platformManagementFeeRate(PM_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
-        globals.setPlatformManagementFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, 20_0000);
 
-        assertEq(globals.platformManagementFeeRate(PM_ADDRESS), 0.2e18);
+        assertEq(globals.platformManagementFeeRate(PM_ADDRESS), 20_0000);
     }
 
 }
@@ -480,28 +485,30 @@ contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
 
     function test_setPlatformOriginationFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 20_0000);
 
         vm.prank(GOVERNOR);
-        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 20_0000);
     }
 
     function test_setPlatformOriginationFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        vm.expectRevert("MG:SPOFR:RATE_GT_100");
-        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 1e18 + 1);
+        uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
-        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 1e18);
+        vm.expectRevert("MG:SPOFR:RATE_GT_100");
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, hundredPercent + 1);
+
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, hundredPercent);
     }
 
     function test_setPlatformOriginationFeeRate() external {
         assertEq(globals.platformOriginationFeeRate(PM_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
-        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 20_0000);
 
-        assertEq(globals.platformOriginationFeeRate(PM_ADDRESS), 0.2e18);
+        assertEq(globals.platformOriginationFeeRate(PM_ADDRESS), 20_0000);
     }
 
 }
@@ -512,28 +519,30 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
     function test_setPlatformServiceFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setPlatformServiceFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, 20_0000);
 
         vm.prank(GOVERNOR);
-        globals.setPlatformServiceFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, 20_0000);
     }
 
     function test_setPlatformServiceFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        vm.expectRevert("MG:SPSFR:RATE_GT_100");
-        globals.setPlatformServiceFeeRate(PM_ADDRESS, 1e18 + 1);
+        uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
-        globals.setPlatformServiceFeeRate(PM_ADDRESS, 1e18);
+        vm.expectRevert("MG:SPSFR:RATE_GT_100");
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, hundredPercent + 1);
+
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, hundredPercent);
     }
 
     function test_setPlatformServiceFeeRate() external {
         assertEq(globals.platformServiceFeeRate(PM_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
-        globals.setPlatformServiceFeeRate(PM_ADDRESS, 0.2e18);
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, 20_0000);
 
-        assertEq(globals.platformServiceFeeRate(PM_ADDRESS), 0.2e18);
+        assertEq(globals.platformServiceFeeRate(PM_ADDRESS), 20_0000);
     }
 
 }

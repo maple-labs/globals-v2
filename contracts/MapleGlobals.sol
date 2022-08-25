@@ -36,7 +36,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Storage ***/
     /***************/
 
-    uint256 public constant HUNDRED_PERCENT = 1e18;
+    uint256 public constant HUNDRED_PERCENT = 100_0000;
 
     address public override mapleTreasury;
     address public override migrationAdmin;
