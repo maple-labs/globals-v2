@@ -67,7 +67,7 @@ interface IMapleGlobals {
 
     function isPoolDeployer(address account_) external view returns (bool isValid_);
 
-    function getLatestPrice(address asset_) external view returns (uint256 price_);
+    function getLatestPrice(address asset_) external view returns (uint256 latestPrice_);
 
     function governor() external view returns (address governor_);
 

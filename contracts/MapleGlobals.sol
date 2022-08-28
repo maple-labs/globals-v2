@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.7;
 
-import { console } from "../modules/contract-test-utils/contracts/test.sol";
-
 import { NonTransparentProxied } from "../modules/non-transparent-proxy/contracts/NonTransparentProxied.sol";
 
 import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
@@ -103,18 +101,20 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     // NOTE: `minCoverAmount` is not enforced at activation time.
     function activatePoolManager(address poolManager_) external override isGovernor {
-        address delegate = IPoolManagerLike(poolManager_).poolDelegate();
-        emit PoolManagerActivated(poolManager_, delegate);
-        poolDelegates[delegate].ownedPoolManager = poolManager_;
+        address delegate_ = IPoolManagerLike(poolManager_).poolDelegate();
+        emit PoolManagerActivated(poolManager_, delegate_);
+        poolDelegates[delegate_].ownedPoolManager = poolManager_;
         IPoolManagerLike(poolManager_).setActive(true);
     }
 
     function setMapleTreasury(address mapleTreasury_) external override isGovernor {
+        require(mapleTreasury_ != address(0), "MG:SMT:ZERO_ADDRESS");
         emit MapleTreasurySet(mapleTreasury, mapleTreasury_);
         mapleTreasury = mapleTreasury_;
     }
 
     function setMigrationAdmin(address migrationAdmin_) external override isGovernor {
+        require(migrationAdmin_ != address(0), "MG:SMT:ZERO_ADDRESS");
         emit MigrationAdminSet(migrationAdmin, migrationAdmin_);
         migrationAdmin = migrationAdmin_;
     }
@@ -124,6 +124,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setSecurityAdmin(address securityAdmin_) external override isGovernor {
+        require(securityAdmin_ != address(0), "MG:SMT:ZERO_ADDRESS");
         emit SecurityAdminSet(securityAdmin, securityAdmin_);
         securityAdmin = securityAdmin_;
     }
@@ -230,22 +231,22 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setTimelockWindows(address contract_, bytes32[] calldata functionIds_, uint128[] calldata delays_, uint128[] calldata durations_) public override isGovernor {
-        for (uint256 i; i < functionIds_.length;) {
-            setTimelockWindow(contract_, functionIds_[i], delays_[i], durations_[i]);
-            unchecked { i++; }
+        for (uint256 i_; i_ < functionIds_.length;) {
+            setTimelockWindow(contract_, functionIds_[i_], delays_[i_], durations_[i_]);
+            unchecked { ++i_; }
         }
     }
 
     // TODO: Add transferOwnedPool function call in pool manager acceptPendingPoolDelegate.
     function transferOwnedPoolManager(address fromPoolDelegate_, address toPoolDelegate_) external override {
-        PoolDelegate storage fromDelegate = poolDelegates[fromPoolDelegate_];
-        PoolDelegate storage toDelegate   = poolDelegates[toPoolDelegate_];
+        PoolDelegate storage fromDelegate_ = poolDelegates[fromPoolDelegate_];
+        PoolDelegate storage toDelegate_   = poolDelegates[toPoolDelegate_];
 
-        require(fromDelegate.ownedPoolManager == msg.sender, "MG:TOPM:NOT_AUTHORIZED");
-        require(toDelegate.isPoolDelegate,                   "MG:TOPM:NOT_POOL_DELEGATE");
+        require(fromDelegate_.ownedPoolManager == msg.sender, "MG:TOPM:NOT_AUTHORIZED");
+        require(toDelegate_.isPoolDelegate,                   "MG:TOPM:NOT_POOL_DELEGATE");
 
-        fromDelegate.ownedPoolManager = address(0);
-        toDelegate.ownedPoolManager   = msg.sender;
+        fromDelegate_.ownedPoolManager = address(0);
+        toDelegate_.ownedPoolManager   = msg.sender;
 
         emit PoolManagerOwnershipTransferred(fromPoolDelegate_, toPoolDelegate_, msg.sender);
     }
@@ -255,9 +256,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************/
 
     function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
-        bytes32 dataHash = keccak256(abi.encode(callData_));
-        scheduledCalls[msg.sender][contract_][functionId_] = ScheduledCall(block.timestamp, dataHash);
-        emit CallScheduled(msg.sender, contract_, functionId_, dataHash, block.timestamp);
+        bytes32 dataHash_ = keccak256(abi.encode(callData_));
+        scheduledCalls[msg.sender][contract_][functionId_] = ScheduledCall(block.timestamp, dataHash_);
+        emit CallScheduled(msg.sender, contract_, functionId_, dataHash_, block.timestamp);
     }
 
     function unscheduleCall(address caller_, bytes32 functionId_, bytes calldata callData_) external override {
@@ -271,12 +272,12 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function isValidScheduledCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_) public override view returns (bool isValid_) {
-        ScheduledCall      storage scheduledCall      = scheduledCalls[caller_][contract_][functionId_];
-        TimelockParameters storage timelockParameters = timelockParametersOf[contract_][functionId_];
+        ScheduledCall      storage scheduledCall_      = scheduledCalls[caller_][contract_][functionId_];
+        TimelockParameters storage timelockParameters_ = timelockParametersOf[contract_][functionId_];
 
-        uint256 timestamp = scheduledCall.timestamp;
-        uint128 delay     = timelockParameters.delay;
-        uint128 duration  = timelockParameters.duration;
+        uint256 timestamp = scheduledCall_.timestamp;
+        uint128 delay     = timelockParameters_.delay;
+        uint128 duration  = timelockParameters_.duration;
 
         if (duration == uint128(0)) {
             delay    = defaultTimelockParameters.delay;
@@ -286,15 +287,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         isValid_ =
             (block.timestamp >= timestamp + delay) &&
             (block.timestamp <= timestamp + delay + duration) &&
-            (keccak256(abi.encode(callData_)) == scheduledCall.dataHash);
+            (keccak256(abi.encode(callData_)) == scheduledCall_.dataHash);
     }
 
     /**********************/
     /*** View Functions ***/
     /**********************/
 
-    function getLatestPrice(address asset_) external override view returns (uint256) {
-        // If governor has overriden price because of oracle outage, return overriden price.
+    function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
+        // If governor has overridden price because of oracle outage, return overridden price.
         if (manualOverridePrice[asset_] != 0) return manualOverridePrice[asset_];
 
         ( uint80 roundId_, int256 price_, , uint256 updatedAt_, uint80 answeredInRound_ ) = IChainlinkAggregatorV3Like(oracleFor[asset_]).latestRoundData();
@@ -303,7 +304,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         require(answeredInRound_ >= roundId_, "MG:GLP:STALE_DATA");
         require(price_ != int256(0),          "MG:GLP:ZERO_PRICE");
 
-        return uint256(price_);
+        latestPrice_ = uint256(price_);
     }
 
     function governor() external view override returns (address governor_) {
