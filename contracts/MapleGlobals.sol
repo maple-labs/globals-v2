@@ -302,7 +302,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
         require(updatedAt_ != 0,              "MG:GLP:ROUND_NOT_COMPLETE");
         require(answeredInRound_ >= roundId_, "MG:GLP:STALE_DATA");
-        require(price_ != int256(0),          "MG:GLP:ZERO_PRICE");
+        require(price_ > int256(0),           "MG:GLP:ZERO_PRICE");
 
         latestPrice_ = uint256(price_);
     }
