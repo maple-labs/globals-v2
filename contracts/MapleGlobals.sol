@@ -86,9 +86,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function acceptGovernor() external {
         require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOVERNOR");
+        emit GovernorshipAccepted(admin(), msg.sender);
         _setAddress(ADMIN_SLOT, msg.sender);
         pendingGovernor = address(0);
-        emit GovernorshipAccepted(admin(), msg.sender);
     }
 
     function setPendingGovernor(address pendingGovernor_) external isGovernor {
