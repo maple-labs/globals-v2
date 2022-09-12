@@ -18,7 +18,7 @@ contract BaseMapleGlobalsTest is TestUtils {
     MapleGlobals globals;
 
     function setUp() public virtual {
-        implementation = address(new MapleGlobals(2 weeks, 2 days));
+        implementation = address(new MapleGlobals());
         globals        = MapleGlobals(address(new NonTransparentProxy(GOVERNOR, address(implementation))));
     }
 

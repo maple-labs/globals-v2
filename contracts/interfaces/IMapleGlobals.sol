@@ -44,6 +44,13 @@ interface IMapleGlobals {
     event GovernorshipAccepted(address indexed previousGovernor_, address indexed currentGovernor_);
 
     /**
+     *  @dev   The price for an asset has been set.
+     *  @param asset_ The address of the asset.
+     *  @param price_ The manually set price of the asset.
+     */
+    event ManualOverridePriceSet(address indexed asset_, uint256 price_);
+
+    /**
      *  @dev   The address for the Maple treasury has been set.
      *  @param previousMapleTreasury_ The previous treasury.
      *  @param currentMapleTreasury_  The new treasury.
@@ -112,6 +119,13 @@ interface IMapleGlobals {
      *  @param poolManager_      The address of the pool manager.
      */
     event PoolManagerOwnershipTransferred(address indexed fromPoolDelegate_, address indexed toPoolDelegate_, address indexed poolManager_);
+
+    /**
+     *  @dev   The oracle for an asset has been set.
+     *  @param asset_  The address of the asset.
+     *  @param oracle_ The address of the oracle.
+     */
+    event PriceOracleSet(address indexed asset_, address indexed oracle_);
 
     /**
      *  @dev  The protocol pause was set to a new state.

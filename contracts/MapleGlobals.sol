@@ -67,10 +67,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => PoolDelegate) public override poolDelegates;
 
-    constructor(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) {
-        defaultTimelockParameters = TimelockParameters(defaultTimelockDelay_, defaultTimelockDuration_);
-    }
-
     /*****************/
     /*** Modifiers ***/
     /*****************/
@@ -121,6 +117,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function setPriceOracle(address asset_, address oracle_) external override isGovernor {
         oracleFor[asset_] = oracle_;
+        emit PriceOracleSet(asset_, oracle_);
     }
 
     function setSecurityAdmin(address securityAdmin_) external override isGovernor {
@@ -181,6 +178,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function setManualOverridePrice(address asset_, uint256 price_) external override isGovernor {
         manualOverridePrice[asset_] = price_;
+        emit ManualOverridePriceSet(asset_, price_);
     }
 
     /*********************/
