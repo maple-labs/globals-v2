@@ -110,7 +110,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setMigrationAdmin(address migrationAdmin_) external override isGovernor {
-        require(migrationAdmin_ != address(0), "MG:SMT:ZERO_ADDRESS");
+        require(migrationAdmin_ != address(0), "MG:SMA:ZERO_ADDRESS");
         emit MigrationAdminSet(migrationAdmin, migrationAdmin_);
         migrationAdmin = migrationAdmin_;
     }
@@ -121,7 +121,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setSecurityAdmin(address securityAdmin_) external override isGovernor {
-        require(securityAdmin_ != address(0), "MG:SMT:ZERO_ADDRESS");
+        require(securityAdmin_ != address(0), "MG:SSA:ZERO_ADDRESS");
         emit SecurityAdminSet(securityAdmin, securityAdmin_);
         securityAdmin = securityAdmin_;
     }
