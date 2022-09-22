@@ -344,6 +344,32 @@ contract SetValidPoolDeployer is BaseMapleGlobalsTest {
     }
 }
 
+contract SetValidPoolDelegate is BaseMapleGlobalsTest {
+
+    function test_setValidPoolDelegate_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setValidPoolDelegate(SET_ADDRESS, true);
+
+        vm.prank(GOVERNOR);
+        globals.setValidPoolDelegate(SET_ADDRESS, true);
+    }
+
+    function test_setValidPoolDelegate() external {
+        vm.startPrank(GOVERNOR);
+
+        assertTrue(!globals.isPoolDelegate(SET_ADDRESS));
+
+        globals.setValidPoolDelegate(SET_ADDRESS, true);
+
+        assertTrue(globals.isPoolDelegate(SET_ADDRESS));
+
+        globals.setValidPoolDelegate(SET_ADDRESS, false);
+
+        assertTrue(!globals.isPoolDelegate(SET_ADDRESS));
+    }
+    
+}
+
 /*********************/
 /*** Price Setters ***/
 /*********************/
