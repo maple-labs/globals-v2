@@ -296,7 +296,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         // If governor has overridden price because of oracle outage, return overridden price.
         if (manualOverridePrice[asset_] != 0) return manualOverridePrice[asset_];
 
-        ( uint80 roundId_, int256 price_, , uint256 updatedAt_, uint80 answeredInRound_ ) = IChainlinkAggregatorV3Like(oracleFor[asset_]).latestRoundData();
+        address oracle_ = oracleFor[asset_];
+
+        require(oracle_ != address(0), "MG:GLP:ZERO_ORACLE");
+
+        ( uint80 roundId_, int256 price_, , uint256 updatedAt_, uint80 answeredInRound_ ) = IChainlinkAggregatorV3Like(oracle_).latestRoundData();
 
         require(updatedAt_ != 0,              "MG:GLP:ROUND_NOT_COMPLETE");
         require(answeredInRound_ >= roundId_, "MG:GLP:STALE_DATA");

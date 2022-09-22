@@ -843,6 +843,14 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
         globals.setPriceOracle(ASSET, address(oracle));
     }
 
+    function test_getLatestPrice_oracleNotSet() external {
+        vm.prank(GOVERNOR);
+        globals.setPriceOracle(ASSET, address(0));
+
+        vm.expectRevert("MG:GLP:ZERO_ORACLE");
+        globals.getLatestPrice(ASSET);
+    }
+
     function test_getLatestPrice_roundNotComplete() external {
         vm.expectRevert("MG:GLP:ROUND_NOT_COMPLETE");
         globals.getLatestPrice(ASSET);
