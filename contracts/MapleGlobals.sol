@@ -116,6 +116,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setPriceOracle(address asset_, address oracle_) external override isGovernor {
+        require(oracle_ != address(0) && asset_ != address(0), "MG:SPO:ZERO_ADDRESS");
         oracleFor[asset_] = oracle_;
         emit PriceOracleSet(asset_, oracle_);
     }

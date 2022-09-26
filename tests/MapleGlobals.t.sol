@@ -97,6 +97,12 @@ contract SetMapleTreasuryTests is BaseMapleGlobalsTest {
         globals.setMapleTreasury(SET_ADDRESS);
     }
 
+    function test_setMapleTreasury_zeroAddressCheck() external {
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert("MG:SMT:ZERO_ADDRESS");
+        globals.setMapleTreasury(address(0));
+    }
+
     function test_setMapleTreasury() external {
         assertEq(globals.mapleTreasury(), address(0));
 
@@ -113,6 +119,12 @@ contract SetMigrationAdminTests is BaseMapleGlobalsTest {
     function test_setMigrationAdmin_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
         globals.setMigrationAdmin(SET_ADDRESS);
+    }
+
+    function test_setMigrationAdmin_zeroAddressCheck() external {
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert("MG:SMA:ZERO_ADDRESS");
+        globals.setMigrationAdmin(address(0));
     }
 
     function test_setMigrationAdmin() external {
@@ -133,6 +145,19 @@ contract SetPriceOracleTests is BaseMapleGlobalsTest {
     function test_setPriceOracle_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
         globals.setPriceOracle(ASSET, SET_ADDRESS);
+    }
+
+    function test_setPriceOracle_zeroAddressCheck() external {
+        vm.startPrank(GOVERNOR);
+
+        vm.expectRevert("MG:SPO:ZERO_ADDRESS");
+        globals.setPriceOracle(ASSET, address(0));
+
+        vm.expectRevert("MG:SPO:ZERO_ADDRESS");
+        globals.setPriceOracle(address(0), SET_ADDRESS);
+
+        vm.expectRevert("MG:SPO:ZERO_ADDRESS");
+        globals.setPriceOracle(address(0), address(0));
     }
 
     function test_setPriceOracle() external {
@@ -169,6 +194,12 @@ contract SetSecurityAdminTests is BaseMapleGlobalsTest {
     function test_setSecurityAdmin_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
         globals.setSecurityAdmin(SET_ADDRESS);
+    }
+
+    function test_setSecurityAdmin_zeroAddressCheck() external {
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert("MG:SSA:ZERO_ADDRESS");
+        globals.setSecurityAdmin(address(0));
     }
 
     function test_setSecurityAdmin() external {
@@ -367,7 +398,7 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
 
         assertTrue(!globals.isPoolDelegate(SET_ADDRESS));
     }
-    
+
 }
 
 /*********************/
@@ -870,11 +901,10 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
     }
 
     function test_getLatestPrice_oracleNotSet() external {
-        vm.prank(GOVERNOR);
-        globals.setPriceOracle(ASSET, address(0));
+        address secondAsset = address(new Address());
 
         vm.expectRevert("MG:GLP:ZERO_ORACLE");
-        globals.getLatestPrice(ASSET);
+        globals.getLatestPrice(secondAsset);
     }
 
     function test_getLatestPrice_roundNotComplete() external {
@@ -934,4 +964,3 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
     }
 
 }
-
