@@ -11,8 +11,6 @@ import {
     IPoolManagerLike
 } from "./interfaces/Interfaces.sol";
 
-// TODO: Natspec
-
 contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     struct PoolDelegate {
@@ -30,9 +28,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         bytes32 dataHash;
     }
 
-    /***************/
-    /*** Storage ***/
-    /***************/
+    /******************************************************************************************************************************/
+    /*** Storage                                                                                                                ***/
+    /******************************************************************************************************************************/
 
     uint256 public constant HUNDRED_PERCENT = 100_0000;
 
@@ -67,18 +65,18 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => PoolDelegate) public override poolDelegates;
 
-    /*****************/
-    /*** Modifiers ***/
-    /*****************/
+    /******************************************************************************************************************************/
+    /*** Modifiers                                                                                                              ***/
+    /******************************************************************************************************************************/
 
     modifier isGovernor {
         require(msg.sender == admin(), "MG:NOT_GOVERNOR");
         _;
     }
 
-    /***********************************/
-    /*** Governor Transfer Functions ***/
-    /***********************************/
+    /******************************************************************************************************************************/
+    /*** Governor Transfer Functions                                                                                                                ***/
+    /******************************************************************************************************************************/
 
     function acceptGovernor() external {
         require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOVERNOR");
@@ -91,9 +89,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit PendingGovernorSet(pendingGovernor = pendingGovernor_);
     }
 
-    /**********************/
-    /*** Global Setters ***/
-    /**********************/
+    /******************************************************************************************************************************/
+    /*** Global Setters                                                                                                             ***/
+    /******************************************************************************************************************************/
 
     // NOTE: `minCoverAmount` is not enforced at activation time.
     function activatePoolManager(address poolManager_) external override isGovernor {
@@ -132,9 +130,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         defaultTimelockParameters = TimelockParameters(defaultTimelockDelay_, defaultTimelockDuration_);
     }
 
-    /***********************/
-    /*** Boolean Setters ***/
-    /***********************/
+    /******************************************************************************************************************************/
+    /*** Boolean Setters                                                                                                                ***/
+    /******************************************************************************************************************************/
 
     function setProtocolPause(bool protocolPaused_) external override {
         require(msg.sender == securityAdmin, "MG:SPP:NOT_SECURITY_ADMIN");
@@ -142,9 +140,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ProtocolPauseSet(msg.sender, protocolPaused_);
     }
 
-    /*************************/
-    /*** Allowlist Setters ***/
-    /*************************/
+    /******************************************************************************************************************************/
+    /*** Allowlist Setters                                                                                                              ***/
+    /******************************************************************************************************************************/
 
     function setValidBorrower(address borrower_, bool isValid_) external override isGovernor {
         isBorrower[borrower_] = isValid_;
@@ -173,18 +171,18 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidPoolDeployerSet(poolDeployer_, isValid_);
     }
 
-    /*********************/
-    /*** Price Setters ***/
-    /*********************/
+    /******************************************************************************************************************************/
+    /*** Price Setters                                                                                                              ***/
+    /******************************************************************************************************************************/
 
     function setManualOverridePrice(address asset_, uint256 price_) external override isGovernor {
         manualOverridePrice[asset_] = price_;
         emit ManualOverridePriceSet(asset_, price_);
     }
 
-    /*********************/
-    /*** Cover Setters ***/
-    /*********************/
+    /******************************************************************************************************************************/
+    /*** Cover Setters                                                                                                              ***/
+    /******************************************************************************************************************************/
 
     function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override isGovernor {
         minCoverAmount[poolManager_] = minCoverAmount_;
@@ -197,9 +195,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit MaxCoverLiquidationPercentSet(poolManager_, maxCoverLiquidationPercent_);
     }
 
-    /*******************/
-    /*** Fee Setters ***/
-    /*******************/
+    /******************************************************************************************************************************/
+    /*** Fee Setters                                                                                                                ***/
+    /******************************************************************************************************************************/
 
     function setPlatformManagementFeeRate(address poolManager_, uint256 platformManagementFeeRate_) external override isGovernor {
         require(platformManagementFeeRate_ <= HUNDRED_PERCENT, "MG:SPMFR:RATE_GT_100");
@@ -219,11 +217,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit PlatformServiceFeeRateSet(poolManager_, platformServiceFeeRate_);
     }
 
-    /**********************************/
-    /*** Contract Control Functions ***/
-    /**********************************/
+    /******************************************************************************************************************************/
+    /*** Contract Control Functions                                                                                                             ***/
+    /******************************************************************************************************************************/
 
-    // TODO: isGovernor optimization on public function chaining.
     function setTimelockWindow(address contract_, bytes32 functionId_, uint128 delay_, uint128 duration_) public override isGovernor {
         timelockParametersOf[contract_][functionId_] = TimelockParameters(delay_, duration_);
         emit TimelockWindowSet(contract_, functionId_, delay_, duration_);
@@ -236,7 +233,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         }
     }
 
-    // TODO: Add transferOwnedPool function call in pool manager acceptPendingPoolDelegate.
     function transferOwnedPoolManager(address fromPoolDelegate_, address toPoolDelegate_) external override {
         PoolDelegate storage fromDelegate_ = poolDelegates[fromPoolDelegate_];
         PoolDelegate storage toDelegate_   = poolDelegates[toPoolDelegate_];
@@ -250,9 +246,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit PoolManagerOwnershipTransferred(fromPoolDelegate_, toPoolDelegate_, msg.sender);
     }
 
-    /**************************/
-    /*** Schedule Functions ***/
-    /**************************/
+    /******************************************************************************************************************************/
+    /*** Schedule Functions                                                                                                             ***/
+    /******************************************************************************************************************************/
 
     function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
         bytes32 dataHash_ = keccak256(abi.encode(callData_));
@@ -289,9 +285,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
             (keccak256(abi.encode(callData_)) == scheduledCall_.dataHash);
     }
 
-    /**********************/
-    /*** View Functions ***/
-    /**********************/
+    /******************************************************************************************************************************/
+    /*** View Functions                                                                                                             ***/
+    /******************************************************************************************************************************/
 
     function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
         // If governor has overridden price because of oracle outage, return overridden price.
@@ -322,9 +318,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         poolManager_ = poolDelegates[account_].ownedPoolManager;
     }
 
-    /************************/
-    /*** Helper Functions ***/
-    /************************/
+    /******************************************************************************************************************************/
+    /*** Helper Functions                                                                                                               ***/
+    /******************************************************************************************************************************/
 
     function _setAddress(bytes32 slot_, address value_) private {
         assembly {

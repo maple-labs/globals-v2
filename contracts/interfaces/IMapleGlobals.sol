@@ -3,9 +3,9 @@ pragma solidity ^0.8.7;
 
 interface IMapleGlobals {
 
-    /**************/
-    /*** Events ***/
-    /**************/
+    /******************************************************************************************************************************/
+    /*** Events                                                                                                     ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   A time locked call has been scheduled.
@@ -186,9 +186,9 @@ interface IMapleGlobals {
      */
     event ValidPoolDeployerSet(address indexed poolDeployer_, bool indexed isValid_);
 
-    /***********************/
-    /*** State Variables ***/
-    /***********************/
+    /******************************************************************************************************************************/
+    /*** State Variables                                                                                                        ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev    Gets the default timelock parameters.
@@ -359,9 +359,9 @@ interface IMapleGlobals {
      */
     function timelockParametersOf(address contract_, bytes32 functionId_) external view returns (uint128 delay, uint128 duration);
 
-    /**********************/
-    /*** Global Setters ***/
-    /**********************/
+    /******************************************************************************************************************************/
+    /*** Global Setters                                                                                                     ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   Activates the pool manager.
@@ -401,9 +401,9 @@ interface IMapleGlobals {
      */
     function setDefaultTimelockParameters(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) external;
 
-    /***********************/
-    /*** Boolean Setters ***/
-    /***********************/
+    /******************************************************************************************************************************/
+    /*** Boolean Setters                                                                                                        ***/
+    /******************************************************************************************************************************/
 
     /**
     *  @dev   Sets the protocol pause.
@@ -411,9 +411,9 @@ interface IMapleGlobals {
     */
     function setProtocolPause(bool protocolPaused_) external;
 
-    /*************************/
-    /*** Allowlist Setters ***/
-    /*************************/
+    /******************************************************************************************************************************/
+    /*** Allowlist Setters                                                                                                      ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   Sets the validity of the borrower.
@@ -451,9 +451,9 @@ interface IMapleGlobals {
      */
     function setValidPoolDeployer(address poolDeployer_, bool isValid_) external;
 
-    /*********************/
-    /*** Price Setters ***/
-    /*********************/
+    /******************************************************************************************************************************/
+    /*** Price Setters                                                                                                      ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   Sets the manual override price of the asset.
@@ -462,9 +462,9 @@ interface IMapleGlobals {
      */
     function setManualOverridePrice(address asset_, uint256 price_) external;
 
-    /*********************/
-    /*** Cover Setters ***/
-    /*********************/
+    /******************************************************************************************************************************/
+    /*** Cover Setters                                                                                                      ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   Sets the maximum cover liquidation percent for the given pool manager..
@@ -480,9 +480,9 @@ interface IMapleGlobals {
      */
     function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external;
 
-    /*******************/
-    /*** Fee Setters ***/
-    /*******************/
+    /******************************************************************************************************************************/
+    /*** Fee Setters                                                                                                        ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   Sets the platform management fee rate for the given pool manager.
@@ -505,9 +505,9 @@ interface IMapleGlobals {
      */
     function setPlatformServiceFeeRate(address poolManager_, uint256 platformServiceFeeRate_) external;
 
-    /*********************************/
-    /*** Contact Control Functions ***/
-    /*********************************/
+    /******************************************************************************************************************************/
+    /*** Contact Control Functions                                                                                                      ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   Sets the timelock for the given contract.
@@ -534,9 +534,9 @@ interface IMapleGlobals {
      */
     function transferOwnedPoolManager(address fromPoolDelegate_, address toPoolDelegate_) external;
 
-    /**************************/
-    /*** Schedule Functions ***/
-    /**************************/
+    /******************************************************************************************************************************/
+    /*** Schedule Functions                                                                                                     ***/
+    /******************************************************************************************************************************/
 
     /**
      *  @dev   Schedules a call to be executed.
