@@ -158,6 +158,13 @@ interface IMapleGlobals {
     event ValidBorrowerSet(address indexed borrower_, bool indexed isValid_);
 
     /**
+     *  @dev   A valid asset was set.
+     *  @param collateralAsset_ The address of the collateral asset.
+     *  @param isValid_         The validity of the collateral asset.
+     */
+     event ValidCollateralAssetSet(address indexed collateralAsset_, bool indexed isValid_);
+
+    /**
      *  @dev   A valid factory was set.
      *  @param factoryKey_ The key of the factory.
      *  @param factory_    The address of the factory.
@@ -203,6 +210,13 @@ interface IMapleGlobals {
      *  @return isValid_  A boolean indicating the validity of the borrower.
      */
     function isBorrower(address borrower_) external view returns (bool isValid_);
+
+    /**
+     *  @dev    Gets the validity of a collateral asset.
+     *  @param  collateralAsset_ The address of the collateralAsset to query.
+     *  @return isValid_         A boolean indicating the validity of the collateral asset.
+     */
+    function isCollateralAsset(address collateralAsset_) external view returns (bool isValid_);
 
     /**
      *  @dev    Gets the validity of a factory.
@@ -421,6 +435,13 @@ interface IMapleGlobals {
      *  @param isValid_  A boolean indicating the validity of the borrower.
      */
     function setValidBorrower(address borrower_, bool isValid_) external;
+
+    /**
+     *  @dev   Sets the validity of a collateral asset.
+     *  @param collateralAsset_ The address of the collateral asset to set the validity for.
+     *  @param isValid_         A boolean indicating the validity of the collateral asset.
+     */
+    function setValidCollateralAsset(address collateralAsset_ , bool isValid_) external;
 
     /**
      *  @dev   Sets the validity of the factory.

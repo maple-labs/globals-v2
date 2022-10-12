@@ -298,6 +298,32 @@ contract SetValidBorrowerTests is BaseMapleGlobalsTest {
 
 }
 
+contract SetValidCollateralTests is BaseMapleGlobalsTest {
+
+    function test_setValidCollateral_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setValidCollateralAsset(SET_ADDRESS, true);
+
+        vm.prank(GOVERNOR);
+        globals.setValidCollateralAsset(SET_ADDRESS, true);
+    }
+
+    function test_setValidCollateral() external {
+        vm.startPrank(GOVERNOR);
+
+        assertTrue(!globals.isCollateralAsset(SET_ADDRESS));
+
+        globals.setValidCollateralAsset(SET_ADDRESS, true);
+
+        assertTrue(globals.isCollateralAsset(SET_ADDRESS));
+
+        globals.setValidCollateralAsset(SET_ADDRESS, false);
+
+        assertTrue(!globals.isCollateralAsset(SET_ADDRESS));
+    }
+
+}
+
 contract SetValidFactoryTests is BaseMapleGlobalsTest {
 
     function test_setValidFactory_notGovernor() external {

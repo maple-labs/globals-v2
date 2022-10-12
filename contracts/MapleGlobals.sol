@@ -46,6 +46,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(address => address) public override oracleFor;
 
     mapping(address => bool) public override isBorrower;
+    mapping(address => bool) public override isCollateralAsset;
     mapping(address => bool) public override isPoolAsset;
     mapping(address => bool) public override isPoolDeployer;
 
@@ -75,7 +76,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Governor Transfer Functions                                                                                                                ***/
+    /*** Governor Transfer Functions                                                                                            ***/
     /******************************************************************************************************************************/
 
     function acceptGovernor() external {
@@ -90,7 +91,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Global Setters                                                                                                             ***/
+    /*** Global Setters                                                                                                         ***/
     /******************************************************************************************************************************/
 
     // NOTE: `minCoverAmount` is not enforced at activation time.
@@ -131,7 +132,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Boolean Setters                                                                                                                ***/
+    /*** Boolean Setters                                                                                                        ***/
     /******************************************************************************************************************************/
 
     function setProtocolPause(bool protocolPaused_) external override {
@@ -141,12 +142,17 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Allowlist Setters                                                                                                              ***/
+    /*** Allowlist Setters                                                                                                      ***/
     /******************************************************************************************************************************/
 
     function setValidBorrower(address borrower_, bool isValid_) external override isGovernor {
         isBorrower[borrower_] = isValid_;
         emit ValidBorrowerSet(borrower_, isValid_);
+    }
+
+    function setValidCollateralAsset(address collateralAsset_, bool isValid_) external override isGovernor {
+        isCollateralAsset[collateralAsset_] = isValid_;
+        emit ValidCollateralAssetSet(collateralAsset_, isValid_);
     }
 
     function setValidFactory(bytes32 factoryKey_, address factory_, bool isValid_) external override isGovernor {
@@ -172,7 +178,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Price Setters                                                                                                              ***/
+    /*** Price Setters                                                                                                          ***/
     /******************************************************************************************************************************/
 
     function setManualOverridePrice(address asset_, uint256 price_) external override isGovernor {
@@ -181,7 +187,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Cover Setters                                                                                                              ***/
+    /*** Cover Setters                                                                                                          ***/
     /******************************************************************************************************************************/
 
     function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override isGovernor {
@@ -196,7 +202,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Fee Setters                                                                                                                ***/
+    /*** Fee Setters                                                                                                            ***/
     /******************************************************************************************************************************/
 
     function setPlatformManagementFeeRate(address poolManager_, uint256 platformManagementFeeRate_) external override isGovernor {
@@ -218,7 +224,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Contract Control Functions                                                                                                             ***/
+    /*** Contract Control Functions                                                                                             ***/
     /******************************************************************************************************************************/
 
     function setTimelockWindow(address contract_, bytes32 functionId_, uint128 delay_, uint128 duration_) public override isGovernor {
@@ -247,7 +253,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Schedule Functions                                                                                                             ***/
+    /*** Schedule Functions                                                                                                     ***/
     /******************************************************************************************************************************/
 
     function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
@@ -286,7 +292,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** View Functions                                                                                                             ***/
+    /*** View Functions                                                                                                         ***/
     /******************************************************************************************************************************/
 
     function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
@@ -319,7 +325,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     /******************************************************************************************************************************/
-    /*** Helper Functions                                                                                                               ***/
+    /*** Helper Functions                                                                                                       ***/
     /******************************************************************************************************************************/
 
     function _setAddress(bytes32 slot_, address value_) private {
