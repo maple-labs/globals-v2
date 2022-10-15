@@ -1,15 +1,31 @@
-# REPOSITORY
+# Maple Globals V2
 
 ![Foundry CI](https://github.com/maple-labs/globals-v2/actions/workflows/push-to-main.yaml/badge.svg) [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
+## Overview
+
+This repository holds the singleton contract `MapleGlobals` which is responsible for configuring protocol wide parameters of the Maple V2 protocol. For more information, please review the Globals section of the protocol [wiki](https://github.com/maple-labs/maple-core-v2/wiki/Globals).
+
 ## Setup
 
-## Usage
+This project was built using [Foundry](https://book.getfoundry.sh/). Refer to installation instructions [here](https://github.com/foundry-rs/foundry#installation).
+
+```sh
+git clone git@github.com:maple-labs/globals-v2.git
+cd globals-v2
+forge install
+```
+
+## Running Tests
+
+- To run all tests: `forge test`
+- To run specific tests: `forge test --match <test_name>`
 
 ## About Maple
-Maple is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.
 
-For all technical documentation related to the Maple protocol, please refer to the GitHub [wiki](https://github.com/maple-labs/maple-core/wiki).
+[Maple Finance](https://maple.finance/) is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.
+
+For all technical documentation related to the Maple V2 protocol, please refer to the GitHub [wiki](https://github.com/maple-labs/maple-core-v2/wiki).
 
 ---
 
