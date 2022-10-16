@@ -6,6 +6,16 @@
 
 This repository holds the singleton contract `MapleGlobals` which is responsible for configuring protocol wide parameters of the Maple V2 protocol. For more information, please review the Globals section of the protocol [wiki](https://github.com/maple-labs/maple-core-v2/wiki/Globals).
 
+## Dependencies/Inheritance
+
+Contracts in this repo inherit and import code from:
+- [`maple-labs/non-transparent-proxy`](https://github.com/maple-labs/non-transparent-proxy)
+
+Contracts inherit and import code in the following ways:
+- `Globals` inherits `NonTransparentProxied` for proxy logic.
+
+Versions of dependencies can be checked with `git submodule status`.
+
 ## Setup
 
 This project was built using [Foundry](https://book.getfoundry.sh/). Refer to installation instructions [here](https://github.com/foundry-rs/foundry#installation).
