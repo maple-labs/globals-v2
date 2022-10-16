@@ -24,9 +24,9 @@ contract BaseMapleGlobalsTest is TestUtils {
 
 }
 
-/***********************************/
-/*** Governor Transfer Functions ***/
-/***********************************/
+/******************************************************************************************************************************/
+/*** Governor Transfer Functions                                                                                            ***/
+/******************************************************************************************************************************/
 
 contract TransferGovernorTests is BaseMapleGlobalsTest {
 
@@ -61,9 +61,9 @@ contract TransferGovernorTests is BaseMapleGlobalsTest {
 
 }
 
-/**********************/
-/*** Global Setters ***/
-/**********************/
+/******************************************************************************************************************************/
+/*** Global Setters                                                                                                         ***/
+/******************************************************************************************************************************/
 
 contract ActivatePoolTests is BaseMapleGlobalsTest {
 
@@ -232,9 +232,9 @@ contract SetDefaultTimelockParametersTests is BaseMapleGlobalsTest {
 
 }
 
-/***********************/
-/*** Boolean Setters ***/
-/***********************/
+/******************************************************************************************************************************/
+/*** Boolean Setters                                                                                                        ***/
+/******************************************************************************************************************************/
 
 contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 
@@ -268,9 +268,9 @@ contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 
 }
 
-/*************************/
-/*** Allowlist Setters ***/
-/*************************/
+/******************************************************************************************************************************/
+/*** Allowlist Setters                                                                                                      ***/
+/******************************************************************************************************************************/
 
 contract SetValidBorrowerTests is BaseMapleGlobalsTest {
 
@@ -427,9 +427,9 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
 
 }
 
-/*********************/
-/*** Price Setters ***/
-/*********************/
+/******************************************************************************************************************************/
+/*** Price Getters                                                                                                          ***/
+/******************************************************************************************************************************/
 
 contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
 
@@ -464,10 +464,9 @@ contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
 
 }
 
-
-/*********************/
-/*** Cover Setters ***/
-/*********************/
+/******************************************************************************************************************************/
+/*** Cover Setters                                                                                                         ***/
+/******************************************************************************************************************************/
 
 contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
 
@@ -481,8 +480,6 @@ contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
 
     function test_setMaxCoverLiquidationPercent_gt100() external {
         vm.startPrank(GOVERNOR);
-
-        uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
         vm.expectRevert("MG:SMCLP:GT_100");
         globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_0001);
@@ -524,9 +521,9 @@ contract SetMinCoverAmountTests is BaseMapleGlobalsTest {
 
 }
 
-/*******************/
-/*** Fee Setters ***/
-/*******************/
+/******************************************************************************************************************************/
+/*** Fee Setters                                                                                                            ***/
+/******************************************************************************************************************************/
 
 contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
@@ -542,8 +539,6 @@ contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
     function test_setPlatformManagementFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
-
-        uint256 hundredPercent = globals.HUNDRED_PERCENT();
 
         vm.expectRevert("MG:SPMFR:RATE_GT_100");
         globals.setPlatformManagementFeeRate(PM_ADDRESS, 100_0001);
@@ -577,8 +572,6 @@ contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
     function test_setPlatformOriginationFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        uint256 hundredPercent = globals.HUNDRED_PERCENT();
-
         vm.expectRevert("MG:SPOFR:RATE_GT_100");
         globals.setPlatformOriginationFeeRate(PM_ADDRESS, 100_0001);
 
@@ -611,8 +604,6 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
     function test_setPlatformServiceFeeRate_outOfBounds() external {
         vm.startPrank(GOVERNOR);
 
-        uint256 hundredPercent = globals.HUNDRED_PERCENT();
-
         vm.expectRevert("MG:SPSFR:RATE_GT_100");
         globals.setPlatformServiceFeeRate(PM_ADDRESS, 100_0001);
 
@@ -630,9 +621,9 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
 }
 
-/**********************************/
-/*** Contract Control Functions ***/
-/**********************************/
+/******************************************************************************************************************************/
+/*** Contract Control Functions                                                                                             ***/
+/******************************************************************************************************************************/
 
 contract SetTimelockWindowTests is BaseMapleGlobalsTest {
 
@@ -760,9 +751,9 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
 
 }
 
-/**************************/
-/*** Schedule Functions ***/
-/**************************/
+/******************************************************************************************************************************/
+/*** Schedule Functions                                                                                                     ***/
+/******************************************************************************************************************************/
 
 contract ScheduleCallTests is BaseMapleGlobalsTest {
 
@@ -794,23 +785,23 @@ contract ScheduleCallTests is BaseMapleGlobalsTest {
         assertEq(timestamp, uint256(0));
         assertEq(dataHash,  bytes32(0));
 
-        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some_calldata");
 
         ( timestamp, dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
         assertEq(timestamp, block.timestamp);
-        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+        assertEq(dataHash,  keccak256(abi.encode("some_calldata")));
     }
 
     function test_scheduleCal_overwrite() external {
-        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some_calldata");
 
         vm.warp(start + 1 days);
 
         ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
         assertEq(timestamp, start);
-        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+        assertEq(dataHash,  keccak256(abi.encode("some_calldata")));
 
         globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some more call data");
 
@@ -836,23 +827,23 @@ contract IsValidScheduledCallTests is BaseMapleGlobalsTest {
     }
 
     function test_isValidScheduledCall() external {
-        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some_calldata");
 
         vm.warp(block.timestamp + 20 days - 1);
 
-        assertTrue(!globals.isValidScheduledCall(address(this), CONTRACT, FUNCTION_ID_1, "some call data"));
+        assertTrue(!globals.isValidScheduledCall(address(this), CONTRACT, FUNCTION_ID_1, "some_calldata"));
 
         vm.warp(block.timestamp + 1);
 
-        assertTrue(globals.isValidScheduledCall(address(this),CONTRACT, FUNCTION_ID_1, "some call data"));
+        assertTrue(globals.isValidScheduledCall(address(this), CONTRACT, FUNCTION_ID_1, "some_calldata"));
 
         vm.warp(block.timestamp + 1 days);
 
-        assertTrue(globals.isValidScheduledCall(address(this),CONTRACT, FUNCTION_ID_1, "some call data"));
+        assertTrue(globals.isValidScheduledCall(address(this), CONTRACT, FUNCTION_ID_1, "some_calldata"));
 
         vm.warp(block.timestamp + 1);
 
-        assertTrue(!globals.isValidScheduledCall(address(this),CONTRACT, FUNCTION_ID_1, "some call data"));
+        assertTrue(!globals.isValidScheduledCall(address(this), CONTRACT, FUNCTION_ID_1, "some_calldata"));
     }
 
 }
@@ -869,17 +860,17 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
         vm.prank(GOVERNOR);
         globals.setTimelockWindow(CONTRACT, FUNCTION_ID_1, 20 days, 1 days);
 
-        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some call data");
+        globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some_calldata");
     }
 
     function test_unscheduleCall() external {
         ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
         assertEq(timestamp, block.timestamp);
-        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+        assertEq(dataHash,  keccak256(abi.encode("some_calldata")));
 
         vm.prank(CONTRACT);
-        globals.unscheduleCall(address(this), FUNCTION_ID_1, "some call data");
+        globals.unscheduleCall(address(this), FUNCTION_ID_1, "some_calldata");
 
         ( timestamp, dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
@@ -889,17 +880,17 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
 
     function test_unscheduleCall_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "some call data");
+        globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "some_calldata");
     }
 
     function test_unscheduleCall_asGovernor() external {
         ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
         assertEq(timestamp, block.timestamp);
-        assertEq(dataHash,  keccak256(abi.encode("some call data")));
+        assertEq(dataHash,  keccak256(abi.encode("some_calldata")));
 
         vm.prank(GOVERNOR);
-        globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "some call data");
+        globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "some_calldata");
 
         ( timestamp, dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
@@ -909,9 +900,9 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
 
 }
 
-/************************/
-/*** Getter Functions ***/
-/************************/
+/******************************************************************************************************************************/
+/*** Getter Functions                                                                                                       ***/
+/******************************************************************************************************************************/
 
 contract GetLatestPriceTests is BaseMapleGlobalsTest {
 

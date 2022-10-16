@@ -4,7 +4,7 @@ pragma solidity ^0.8.7;
 interface IMapleGlobals {
 
     /******************************************************************************************************************************/
-    /*** Events                                                                                                     ***/
+    /*** Events                                                                                                                 ***/
     /******************************************************************************************************************************/
 
     /**
@@ -65,10 +65,10 @@ interface IMapleGlobals {
     event MaxCoverLiquidationPercentSet(address indexed poolManager_, uint256 maxCoverLiquidationPercent_);
 
     /**
-    *  @dev   The migration admin has been set.
-    *  @param previousMigrationAdmin_ The previous migration admin.
-    *  @param nextMigrationAdmin_     The new migration admin.
-    */
+     *  @dev   The migration admin has been set.
+     *  @param previousMigrationAdmin_ The previous migration admin.
+     *  @param nextMigrationAdmin_     The new migration admin.
+     */
     event MigrationAdminSet(address indexed previousMigrationAdmin_, address indexed nextMigrationAdmin_);
 
     /**
@@ -128,14 +128,14 @@ interface IMapleGlobals {
     event PriceOracleSet(address indexed asset_, address indexed oracle_);
 
     /**
-     *  @dev  The protocol pause was set to a new state.
+     *  @dev   The protocol pause was set to a new state.
      *  @param securityAdmin_  The address of the security admin.
      *  @param protocolPaused_ The protocol paused state.
      */
     event ProtocolPauseSet(address indexed securityAdmin_, bool indexed protocolPaused_);
 
     /**
-     *  @dev  The security admin was set.
+     *  @dev   The security admin was set.
      *  @param previousSecurityAdmin_ The address of the previous security admin.
      *  @param currentSecurityAdmin_  The address of the new security admin.
      */
@@ -229,7 +229,7 @@ interface IMapleGlobals {
     /**
      *  @dev    Gets the validity of a pool asset.
      *  @param  poolAsset_ The address of the poolAsset to query.
-     *  @return isValid_  A boolean indicating the validity of the pool asset.
+     *  @return isValid_   A boolean indicating the validity of the pool asset.
      */
     function isPoolAsset(address poolAsset_) external view returns (bool isValid_);
 
@@ -374,13 +374,13 @@ interface IMapleGlobals {
     function timelockParametersOf(address contract_, bytes32 functionId_) external view returns (uint128 delay, uint128 duration);
 
     /******************************************************************************************************************************/
-    /*** Global Setters                                                                                                     ***/
+    /*** Global Setters                                                                                                         ***/
     /******************************************************************************************************************************/
 
     /**
      *  @dev   Activates the pool manager.
      *  @param poolManager_ The address of the pool manager to activate.
-    */
+     */
     function activatePoolManager(address poolManager_) external;
 
     /**
@@ -420,9 +420,9 @@ interface IMapleGlobals {
     /******************************************************************************************************************************/
 
     /**
-    *  @dev   Sets the protocol pause.
-    *  @param protocolPaused_ A boolean indicating the status of the protocol pause.
-    */
+     *  @dev   Sets the protocol pause.
+     *  @param protocolPaused_ A boolean indicating the status of the protocol pause.
+     */
     function setProtocolPause(bool protocolPaused_) external;
 
     /******************************************************************************************************************************/
@@ -473,7 +473,7 @@ interface IMapleGlobals {
     function setValidPoolDeployer(address poolDeployer_, bool isValid_) external;
 
     /******************************************************************************************************************************/
-    /*** Price Setters                                                                                                      ***/
+    /*** Price Setters                                                                                                          ***/
     /******************************************************************************************************************************/
 
     /**
@@ -484,25 +484,25 @@ interface IMapleGlobals {
     function setManualOverridePrice(address asset_, uint256 price_) external;
 
     /******************************************************************************************************************************/
-    /*** Cover Setters                                                                                                      ***/
+    /*** Cover Setters                                                                                                          ***/
     /******************************************************************************************************************************/
 
     /**
-     *  @dev   Sets the maximum cover liquidation percent for the given pool manager..
+     *  @dev   Sets the maximum cover liquidation percent for the given pool manager.
      *  @param poolManager_                The address of the pool manager to set the maximum cover liquidation percent for.
      *  @param maxCoverLiquidationPercent_ The maximum cover liquidation percent.
      */
     function setMaxCoverLiquidationPercent(address poolManager_, uint256 maxCoverLiquidationPercent_) external;
 
     /**
-     *  @dev   Sets the minimum cover amount  for the given pool manager..
+     *  @dev   Sets the minimum cover amount for the given pool manager.
      *  @param poolManager_    The address of the pool manager to set the minimum cover amount  for.
      *  @param minCoverAmount_ The minimum cover amount.
      */
     function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external;
 
     /******************************************************************************************************************************/
-    /*** Fee Setters                                                                                                        ***/
+    /*** Fee Setters                                                                                                            ***/
     /******************************************************************************************************************************/
 
     /**
@@ -527,7 +527,7 @@ interface IMapleGlobals {
     function setPlatformServiceFeeRate(address poolManager_, uint256 platformServiceFeeRate_) external;
 
     /******************************************************************************************************************************/
-    /*** Contact Control Functions                                                                                                      ***/
+    /*** Contact Control Functions                                                                                              ***/
     /******************************************************************************************************************************/
 
     /**
@@ -549,7 +549,7 @@ interface IMapleGlobals {
     function setTimelockWindows(address contract_, bytes32[] calldata functionIds_, uint128[] calldata delays_, uint128[] calldata durations_) external;
 
     /**
-     *  @dev Transfer the ownership of the pool manager.
+     *  @dev   Transfer the ownership of the pool manager.
      *  @param fromPoolDelegate_ The address of the pool delegate to transfer ownership from.
      *  @param toPoolDelegate_   The address of the pool delegate to transfer ownership to.
      */

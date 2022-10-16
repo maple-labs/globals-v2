@@ -5,27 +5,38 @@ import { NonTransparentProxied } from "../modules/non-transparent-proxy/contract
 
 import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
 
-import {
-    IChainlinkAggregatorV3Like,
-    IPoolLike,
-    IPoolManagerLike
-} from "./interfaces/Interfaces.sol";
+import { IChainlinkAggregatorV3Like, IPoolManagerLike } from "./interfaces/Interfaces.sol";
+
+/*
+
+    ███╗   ███╗ █████╗ ██████╗ ██╗     ███████╗     ██████╗ ██╗      ██████╗ ██████╗  █████╗ ██╗     ███████╗
+    ████╗ ████║██╔══██╗██╔══██╗██║     ██╔════╝    ██╔════╝ ██║     ██╔═══██╗██╔══██╗██╔══██╗██║     ██╔════╝
+    ██╔████╔██║███████║██████╔╝██║     █████╗      ██║  ███╗██║     ██║   ██║██████╔╝███████║██║     ███████╗
+    ██║╚██╔╝██║██╔══██║██╔═══╝ ██║     ██╔══╝      ██║   ██║██║     ██║   ██║██╔══██╗██╔══██║██║     ╚════██║
+    ██║ ╚═╝ ██║██║  ██║██║     ███████╗███████╗    ╚██████╔╝███████╗╚██████╔╝██████╔╝██║  ██║███████╗███████║
+    ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝     ╚══════╝╚══════╝     ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
+
+*/
 
 contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
+
+    /******************************************************************************************************************************/
+    /*** Structs                                                                                                                ***/
+    /******************************************************************************************************************************/
 
     struct PoolDelegate {
         address ownedPoolManager;
         bool    isPoolDelegate;
     }
 
-    struct TimelockParameters {
-        uint128 delay;
-        uint128 duration;
-    }
-
     struct ScheduledCall {
         uint256 timestamp;
         bytes32 dataHash;
+    }
+
+    struct TimelockParameters {
+        uint128 delay;
+        uint128 duration;
     }
 
     /******************************************************************************************************************************/
