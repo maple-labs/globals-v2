@@ -245,7 +245,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function setTimelockWindows(address contract_, bytes32[] calldata functionIds_, uint128[] calldata delays_, uint128[] calldata durations_) public override isGovernor {
         for (uint256 i_; i_ < functionIds_.length;) {
-            setTimelockWindow(contract_, functionIds_[i_], delays_[i_], durations_[i_]);
+            _setTimelockWindow(contract_, functionIds_[i_], delays_[i_], durations_[i_]);
             unchecked { ++i_; }
         }
     }
@@ -343,6 +343,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         assembly {
             sstore(slot_, value_)
         }
+    }
+
+    function _setTimelockWindow(address contract_, bytes32 functionId_, uint128 delay_, uint128 duration_) internal {
+        timelockParametersOf[contract_][functionId_] = TimelockParameters(delay_, duration_);
+        emit TimelockWindowSet(contract_, functionId_, delay_, duration_);
     }
 
 }
