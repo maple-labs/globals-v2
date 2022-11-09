@@ -108,6 +108,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     // NOTE: `minCoverAmount` is not enforced at activation time.
     function activatePoolManager(address poolManager_) external override isGovernor {
         address delegate_ = IPoolManagerLike(poolManager_).poolDelegate();
+        require(poolDelegates[delegate_].ownedPoolManager == address(0), "MG:APM:ALREADY_OWNS");
+
         emit PoolManagerActivated(poolManager_, delegate_);
         poolDelegates[delegate_].ownedPoolManager = poolManager_;
         IPoolManagerLike(poolManager_).setActive(true);
@@ -256,6 +258,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
         require(fromDelegate_.ownedPoolManager == msg.sender, "MG:TOPM:NOT_AUTHORIZED");
         require(toDelegate_.isPoolDelegate,                   "MG:TOPM:NOT_POOL_DELEGATE");
+        require(toDelegate_.ownedPoolManager == address(0),   "MG:TOPM:ALREADY_OWNS");
 
         fromDelegate_.ownedPoolManager = address(0);
         toDelegate_.ownedPoolManager   = msg.sender;

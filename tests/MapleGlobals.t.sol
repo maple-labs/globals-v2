@@ -79,6 +79,15 @@ contract ActivatePoolTests is BaseMapleGlobalsTest {
         globals.activatePoolManager(address(manager));
     }
 
+    function test_activatePoolManager_alreadyOwns() external {
+        vm.prank(GOVERNOR);
+        globals.activatePoolManager(address(manager));
+
+        vm.prank(GOVERNOR);
+        vm.expectRevert("MG:APM:ALREADY_OWNS");
+        globals.activatePoolManager(address(manager));
+    }
+
     function test_activatePoolManager_success() external {
         assertEq(globals.ownedPoolManager(admin), address(0));
 
@@ -726,6 +735,20 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
     function test_transferOwnedPool_notPoolDelegate() external {
         vm.prank(address(manager));
         vm.expectRevert("MG:TOPM:NOT_POOL_DELEGATE");
+        globals.transferOwnedPoolManager(POOL_DELEGATE_1, POOL_DELEGATE_2);
+    }
+
+    function test_transferOwnedPool_alreadyOwns() external {
+        vm.prank(GOVERNOR);
+        globals.setValidPoolDelegate(POOL_DELEGATE_2, true);
+
+        MockPoolManager manager2 = new MockPoolManager(POOL_DELEGATE_2);
+
+        vm.prank(GOVERNOR);
+        globals.activatePoolManager(address(manager2));
+
+        vm.prank(address(manager));
+        vm.expectRevert("MG:TOPM:ALREADY_OWNS");
         globals.transferOwnedPoolManager(POOL_DELEGATE_1, POOL_DELEGATE_2);
     }
 
