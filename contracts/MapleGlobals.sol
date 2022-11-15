@@ -64,6 +64,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(address => uint256) public override manualOverridePrice;
     mapping(address => uint256) public override maxCoverLiquidationPercent;
     mapping(address => uint256) public override minCoverAmount;
+    mapping(address => uint256) public override bootstrapMint;
     mapping(address => uint256) public override platformManagementFeeRate;
     mapping(address => uint256) public override platformOriginationFeeRate;
     mapping(address => uint256) public override platformServiceFeeRate;
@@ -125,6 +126,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         require(migrationAdmin_ != address(0), "MG:SMA:ZERO_ADDRESS");
         emit MigrationAdminSet(migrationAdmin, migrationAdmin_);
         migrationAdmin = migrationAdmin_;
+    }
+
+    function setBootstrapMint(address asset_, uint256 amount_) external override isGovernor {
+        emit BootstrapMintSet(asset_, bootstrapMint[asset_] = amount_);
     }
 
     function setPriceOracle(address asset_, address oracle_) external override isGovernor {

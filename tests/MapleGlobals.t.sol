@@ -530,6 +530,28 @@ contract SetMinCoverAmountTests is BaseMapleGlobalsTest {
 
 }
 
+contract SetBootstrapMintTests is BaseMapleGlobalsTest {
+
+    function test_setBootstrapMint_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setBootstrapMint(SET_ADDRESS, 1_000e6);
+
+        vm.prank(GOVERNOR);
+        globals.setBootstrapMint(SET_ADDRESS, 1_000e6);
+    }
+
+    function test_setBootstrapMint() external {
+        vm.startPrank(GOVERNOR);
+
+        assertEq(globals.bootstrapMint(SET_ADDRESS), 0);
+
+        globals.setBootstrapMint(SET_ADDRESS, 1_000e6);
+
+        assertEq(globals.bootstrapMint(SET_ADDRESS), 1_000e6);
+    }
+
+}
+
 /******************************************************************************************************************************/
 /*** Fee Setters                                                                                                            ***/
 /******************************************************************************************************************************/

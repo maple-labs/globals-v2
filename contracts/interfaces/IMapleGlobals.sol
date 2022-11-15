@@ -79,6 +79,13 @@ interface IMapleGlobals {
     event MinCoverAmountSet(address indexed poolManager_, uint256 minCoverAmount_);
 
     /**
+     *  @dev   A virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`.
+     *  @param asset_         The address of the pool asset.
+     *  @param bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
+     */
+    event BootstrapMintSet(address indexed asset_, uint256 bootstrapMint_);
+
+    /**
      *  @dev   The pending governor has been set.
      *  @param pendingGovernor_ The new pending governor.
      */
@@ -294,6 +301,13 @@ interface IMapleGlobals {
     function minCoverAmount(address poolManager_) external view returns (uint256 minCoverAmount_);
 
     /**
+     *  @dev    Gets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply` for a given pool asset.
+     *  @param  asset_         The address of the pool asset to query
+     *  @return bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
+     */
+    function bootstrapMint(address asset_) external view returns (uint256 bootstrapMint_);
+
+    /**
      *  @dev    Gets the address of the oracle for the given asset.
      *  @param  asset_  The address of the asset to query.
      *  @return oracle_ The address of the oracle.
@@ -394,6 +408,14 @@ interface IMapleGlobals {
      *  @param migrationAdmin_ The address of the migration admin.
      */
     function setMigrationAdmin(address migrationAdmin_) external;
+
+    /**
+     *  @dev   Sets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`
+     *         to prevent an MEV-exploit vector against the first pool depositor.
+     *  @param asset_         The address of the pool asset.
+     *  @param bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
+     */
+    function setBootstrapMint(address asset_, uint256 bootstrapMint_) external;
 
     /**
      *  @dev   Sets the price oracle for the given asset.
