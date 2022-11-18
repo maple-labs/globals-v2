@@ -129,13 +129,7 @@ contract SetMigrationAdminTests is BaseMapleGlobalsTest {
         vm.expectRevert("MG:NOT_GOVERNOR");
         globals.setMigrationAdmin(SET_ADDRESS);
     }
-
-    function test_setMigrationAdmin_zeroAddressCheck() external {
-        vm.startPrank(GOVERNOR);
-        vm.expectRevert("MG:SMA:ZERO_ADDRESS");
-        globals.setMigrationAdmin(address(0));
-    }
-
+    
     function test_setMigrationAdmin() external {
         assertEq(globals.migrationAdmin(), address(0));
 
