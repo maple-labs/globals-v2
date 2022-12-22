@@ -10,12 +10,12 @@ import { MockChainlinkOracle, MockPoolManager } from "./mocks/Mocks.sol";
 
 contract BaseMapleGlobalsTest is TestUtils {
 
-    address GOVERNOR    = address(new Address());
-    address SET_ADDRESS = address(new Address());
+    address internal GOVERNOR    = address(new Address());
+    address internal SET_ADDRESS = address(new Address());
 
-    address implementation;
+    address internal implementation;
 
-    MapleGlobals globals;
+    MapleGlobals internal globals;
 
     function setUp() public virtual {
         implementation = address(new MapleGlobals());
@@ -24,13 +24,13 @@ contract BaseMapleGlobalsTest is TestUtils {
 
 }
 
-/******************************************************************************************************************************/
-/*** Governor Transfer Functions                                                                                            ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Governor Transfer Functions                                                                                                        ***/
+/******************************************************************************************************************************************/
 
 contract TransferGovernorTests is BaseMapleGlobalsTest {
 
-    bytes32 constant ADMIN_SLOT = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
+    bytes32 internal constant ADMIN_SLOT = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
 
     function test_acceptGovernor_notPendingGovernor() external {
         vm.expectRevert("MG:NOT_PENDING_GOVERNOR");
@@ -61,15 +61,15 @@ contract TransferGovernorTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Global Setters                                                                                                         ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Global Setters                                                                                                                     ***/
+/******************************************************************************************************************************************/
 
 contract ActivatePoolTests is BaseMapleGlobalsTest {
 
-    address admin = address(new Address());
+    address internal admin = address(new Address());
 
-    MockPoolManager manager = new MockPoolManager(admin);
+    MockPoolManager internal manager = new MockPoolManager(admin);
 
     function test_activatePoolManager_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
@@ -129,7 +129,7 @@ contract SetMigrationAdminTests is BaseMapleGlobalsTest {
         vm.expectRevert("MG:NOT_GOVERNOR");
         globals.setMigrationAdmin(SET_ADDRESS);
     }
-    
+
     function test_setMigrationAdmin() external {
         assertEq(globals.migrationAdmin(), address(0));
 
@@ -143,7 +143,7 @@ contract SetMigrationAdminTests is BaseMapleGlobalsTest {
 
 contract SetPriceOracleTests is BaseMapleGlobalsTest {
 
-    address ASSET = address(new Address());
+    address internal ASSET = address(new Address());
 
     function test_setPriceOracle_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
@@ -235,13 +235,13 @@ contract SetDefaultTimelockParametersTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Boolean Setters                                                                                                        ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Boolean Setters                                                                                                                    ***/
+/******************************************************************************************************************************************/
 
 contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 
-    address SECURITY_ADMIN = address(new Address());
+    address internal SECURITY_ADMIN = address(new Address());
 
     function setUp() public override {
         super.setUp();
@@ -271,9 +271,9 @@ contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Allowlist Setters                                                                                                      ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Allowlist Setters                                                                                                                  ***/
+/******************************************************************************************************************************************/
 
 contract SetValidBorrowerTests is BaseMapleGlobalsTest {
 
@@ -430,13 +430,13 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Price Getters                                                                                                          ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Price Getters                                                                                                                      ***/
+/******************************************************************************************************************************************/
 
 contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
 
-    address ASSET = address(new Address());
+    address internal ASSET = address(new Address());
 
     function test_setManualOverridePrice_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
@@ -467,9 +467,9 @@ contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Cover Setters                                                                                                         ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Cover Setters                                                                                                                      ***/
+/******************************************************************************************************************************************/
 
 contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
 
@@ -546,13 +546,13 @@ contract SetBootstrapMintTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Fee Setters                                                                                                            ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Fee Setters                                                                                                                        ***/
+/******************************************************************************************************************************************/
 
 contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
-    address PM_ADDRESS = address(new Address());
+    address internal PM_ADDRESS = address(new Address());
 
     function test_setPlatformManagementFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
@@ -584,7 +584,7 @@ contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
 contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
 
-    address PM_ADDRESS = address(new Address());
+    address internal PM_ADDRESS = address(new Address());
 
     function test_setPlatformOriginationFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
@@ -616,7 +616,7 @@ contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
 
 contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
-    address PM_ADDRESS = address(new Address());
+    address internal PM_ADDRESS = address(new Address());
 
     function test_setPlatformServiceFeeRate_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
@@ -646,9 +646,9 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Contract Control Functions                                                                                             ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Contract Control Functions                                                                                                         ***/
+/******************************************************************************************************************************************/
 
 contract SetTimelockWindowTests is BaseMapleGlobalsTest {
 
@@ -658,7 +658,7 @@ contract SetTimelockWindowTests is BaseMapleGlobalsTest {
     bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
     bytes32 internal constant FUNCTION_ID_2 = "FUNCTION_ID_2";
 
-    MockPoolManager manager = new MockPoolManager(POOL_DELEGATE);
+    MockPoolManager internal manager = new MockPoolManager(POOL_DELEGATE);
 
     function test_setTimelockWindow_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
@@ -735,7 +735,7 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
     address internal POOL_DELEGATE_1 = address(new Address());
     address internal POOL_DELEGATE_2 = address(new Address());
 
-    MockPoolManager manager = new MockPoolManager(POOL_DELEGATE_1);
+    MockPoolManager internal manager = new MockPoolManager(POOL_DELEGATE_1);
 
     function setUp() public override {
         super.setUp();
@@ -790,9 +790,9 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Schedule Functions                                                                                                     ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Schedule Functions                                                                                                                 ***/
+/******************************************************************************************************************************************/
 
 contract ScheduleCallTests is BaseMapleGlobalsTest {
 
@@ -800,7 +800,7 @@ contract ScheduleCallTests is BaseMapleGlobalsTest {
 
     bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
 
-    uint256 start;
+    uint256 internal start;
 
     function setUp() public override {
         super.setUp();
@@ -939,15 +939,15 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
 
 }
 
-/******************************************************************************************************************************/
-/*** Getter Functions                                                                                                       ***/
-/******************************************************************************************************************************/
+/******************************************************************************************************************************************/
+/*** Getter Functions                                                                                                                   ***/
+/******************************************************************************************************************************************/
 
 contract GetLatestPriceTests is BaseMapleGlobalsTest {
 
-    address ASSET = address(new Address());
+    address internal ASSET = address(new Address());
 
-    MockChainlinkOracle oracle = new MockChainlinkOracle();
+    MockChainlinkOracle internal oracle = new MockChainlinkOracle();
 
     function setUp() public override {
         super.setUp();
