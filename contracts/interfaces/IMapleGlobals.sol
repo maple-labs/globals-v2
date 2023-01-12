@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.7;
 
-interface IMapleGlobals {
+import { INonTransparentProxied } from "../../modules/non-transparent-proxy/contracts/NonTransparentProxied.sol";
+
+interface IMapleGlobals is INonTransparentProxied {
 
     /**************************************************************************************************************************************/
     /*** Events                                                                                                                         ***/
@@ -399,6 +401,14 @@ interface IMapleGlobals {
      *  @return duration    The time lock duration.
      */
     function timelockParametersOf(address contract_, bytes32 functionId_) external view returns (uint128 delay, uint128 duration);
+
+    /**************************************************************************************************************************************/
+    /*** Governor Transfer Functions                                                                                                    ***/
+    /**************************************************************************************************************************************/
+
+    function acceptGovernor() external;
+
+    function setPendingGovernor(address pendingGovernor_) external;
 
     /**************************************************************************************************************************************/
     /*** Global Setters                                                                                                                 ***/

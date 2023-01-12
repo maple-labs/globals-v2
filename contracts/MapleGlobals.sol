@@ -91,14 +91,14 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Governor Transfer Functions                                                                                                    ***/
     /**************************************************************************************************************************************/
 
-    function acceptGovernor() external {
+    function acceptGovernor() external override {
         require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOVERNOR");
         emit GovernorshipAccepted(admin(), msg.sender);
         _setAddress(ADMIN_SLOT, msg.sender);
         pendingGovernor = address(0);
     }
 
-    function setPendingGovernor(address pendingGovernor_) external isGovernor {
+    function setPendingGovernor(address pendingGovernor_) external override isGovernor {
         emit PendingGovernorSet(pendingGovernor = pendingGovernor_);
     }
 
