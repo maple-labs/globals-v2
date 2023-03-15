@@ -344,11 +344,42 @@ contract SetValidFactoryTests is BaseMapleGlobalsTest {
 
         globals.setValidFactory("TEST_FACTORY", SET_ADDRESS, true);
 
-        assertTrue(globals.isFactory("TEST_FACTORY", SET_ADDRESS));
+        assertTrue(globals.isFactory("TEST_FACTORY",    SET_ADDRESS));
+        assertTrue(globals.isInstanceOf("TEST_FACTORY", SET_ADDRESS));
 
         globals.setValidFactory("TEST_FACTORY", SET_ADDRESS, false);
 
-        assertTrue(!globals.isFactory("TEST_FACTORY", SET_ADDRESS));
+        assertTrue(!globals.isFactory("TEST_FACTORY",    SET_ADDRESS));
+        assertTrue(!globals.isInstanceOf("TEST_FACTORY", SET_ADDRESS));
+    }
+
+}
+
+contract SetValidInstanceOfTests is BaseMapleGlobalsTest {
+
+    function test_setValidInstanceOf_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, true);
+
+        vm.prank(GOVERNOR);
+        globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, true);
+    }
+
+    function test_setValidInstanceOf() external {
+        vm.startPrank(GOVERNOR);
+
+        assertTrue(!globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
+        assertTrue(!globals.isFactory("TEST_INSTANCE",    SET_ADDRESS));  // Backwards compatibility
+
+        globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, true);
+
+        assertTrue(globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
+        assertTrue(globals.isFactory("TEST_INSTANCE",    SET_ADDRESS));  // Backwards compatibility
+
+        globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, false);
+
+        assertTrue(!globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
+        assertTrue(!globals.isFactory("TEST_INSTANCE",    SET_ADDRESS));  // Backwards compatibility
     }
 
 }
