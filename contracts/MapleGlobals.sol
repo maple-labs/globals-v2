@@ -71,7 +71,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => mapping(bytes32 => TimelockParameters)) public override timelockParametersOf;
 
-    mapping(bytes32 => mapping(address => bool)) public override isFactory;
+    mapping(bytes32 => mapping(address => bool)) public override isInstanceOf;
 
     // Timestamp and call data hash for a caller, on a contract, for a function id.
     mapping(address => mapping(address => mapping(bytes32 => ScheduledCall))) public override scheduledCalls;
@@ -178,9 +178,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidCollateralAssetSet(collateralAsset_, isValid_);
     }
 
+    // NOTE: This function is kept for backwards compatibility with the testing suite, but `setValidInstance` should be used instead.
     function setValidFactory(bytes32 factoryKey_, address factory_, bool isValid_) external override isGovernor {
-        isFactory[factoryKey_][factory_] = isValid_;
+        isInstanceOf[factoryKey_][factory_] = isValid_;
         emit ValidFactorySet(factoryKey_, factory_, isValid_);
+    }
+
+    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external override isGovernor {
+        isInstanceOf[instanceKey_][instance_] = isValid_;
+        emit ValidInstanceSet(instanceKey_, instance_, isValid_);
     }
 
     function setValidPoolAsset(address poolAsset_, bool isValid_) external override isGovernor {
@@ -363,6 +369,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function governor() external view override returns (address governor_) {
         governor_ = admin();
+    }
+
+    function isFactory(bytes32 key_, address factory_) external view override returns (bool isFactory_) {
+        isFactory_ = isInstanceOf[key_][factory_];
     }
 
     function isPoolDelegate(address account_) external view override returns (bool isPoolDelegate_) {

@@ -194,6 +194,14 @@ interface IMapleGlobals is INonTransparentProxied {
     event ValidFactorySet(bytes32 indexed factoryKey_, address indexed factory_, bool indexed isValid_);
 
     /**
+     *  @dev   A valid instance was set.
+     *  @param instanceKey_ The key of the instance.
+     *  @param instance_    The address of the instance.
+     *  @param isValid_     The validity of the instance.
+     */
+    event ValidInstanceSet(bytes32 indexed instanceKey_, address indexed instance_, bool indexed isValid_);
+
+    /**
      *  @dev   A valid asset was set.
      *  @param poolAsset_ The address of the asset.
      *  @param isValid_   The validity of the asset.
@@ -246,6 +254,14 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return isValid_   A boolean indicating the validity of the factory.
      */
     function isFactory(bytes32 factoryId_, address factory_) external view returns (bool isValid_);
+
+    /**
+     *  @dev    Gets the validity of a instance.
+     *  @param  instanceId_ The key of the intance to query.
+     *  @param  instance_   The address of the instance to query.
+     *  @return isValid_    A boolean indicating the validity of the instance.
+     */
+    function isInstanceOf(bytes32 instanceId_, address instance_) external view returns (bool isValid_);
 
     /**
      *  @dev    Gets the validity of a pool asset.
@@ -495,6 +511,14 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param isValid_    Boolean indicating the validity of the factory.
      */
     function setValidFactory(bytes32 factoryKey_, address factory_, bool isValid_) external;
+
+    /**
+     *  @dev   Sets the validity of the instance.
+     *  @param instanceKey_ The key of the instance to set the validity for.
+     *  @param instance_    The address of the instance to set the validity for.
+     *  @param isValid_     Boolean indicating the validity of the instance.
+     */
+    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external;
 
     /**
      *  @dev   Sets the validity of the pool asset.
