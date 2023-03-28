@@ -257,7 +257,7 @@ interface IMapleGlobals is INonTransparentProxied {
 
     /**
      *  @dev    Gets the validity of a instance.
-     *  @param  instanceId_ The key of the intance to query.
+     *  @param  instanceId_ The key of the instance to query.
      *  @param  instance_   The address of the instance to query.
      *  @return isValid_    A boolean indicating the validity of the instance.
      */
