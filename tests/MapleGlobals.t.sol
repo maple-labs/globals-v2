@@ -275,6 +275,31 @@ contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 /*** Allowlist Setters                                                                                                                  ***/
 /******************************************************************************************************************************************/
 
+contract SetCanDeployTests is BaseMapleGlobalsTest {
+
+    address FACTORY = address(new Address());
+
+    function test_setCanDeploy_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOVERNOR");
+        globals.setCanDeploy(FACTORY, SET_ADDRESS, true);
+    }
+
+    function test_setCanDeploy() external {
+        assertTrue(!globals.canDeployFrom(FACTORY, SET_ADDRESS));
+
+        vm.prank(GOVERNOR);
+        globals.setCanDeploy(FACTORY, SET_ADDRESS, true);
+
+        assertTrue(globals.canDeployFrom(FACTORY, SET_ADDRESS));
+
+        vm.prank(GOVERNOR);
+        globals.setCanDeploy(FACTORY, SET_ADDRESS, false);
+
+        assertTrue(!globals.canDeployFrom(FACTORY, SET_ADDRESS));
+    }
+
+}
+
 contract SetValidBorrowerTests is BaseMapleGlobalsTest {
 
     function test_setValidBorrower_notGovernor() external {

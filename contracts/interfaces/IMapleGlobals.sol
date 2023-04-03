@@ -21,8 +21,8 @@ interface IMapleGlobals is INonTransparentProxied {
         address indexed caller_,
         address indexed contract_,
         bytes32 indexed functionId_,
-        bytes32 dataHash_,
-        uint256 timestamp_
+        bytes32         dataHash_,
+        uint256         timestamp_
     );
 
     /**
@@ -37,9 +37,17 @@ interface IMapleGlobals is INonTransparentProxied {
         address indexed caller_,
         address indexed contract_,
         bytes32 indexed functionId_,
-        bytes32 dataHash_,
-        uint256 timestamp_
+        bytes32         dataHash_,
+        uint256         timestamp_
     );
+
+    /**
+     *  @dev   An account has been allowed/disallowed from deploying an instance from a particular factory.
+     *  @param factory_       The address of the factory.
+     *  @param account_       The address of the account.
+     *  @param canDeployFrom_ Whether the account can deploy or not from the factory.
+     */
+    event CanDeployFromSet(address indexed factory_, address indexed account_, bool canDeployFrom_);
 
     /**
      *  @dev   The default parameters for the time lock has been set.
@@ -153,7 +161,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param securityAdmin_  The address of the security admin.
      *  @param protocolPaused_ The protocol paused state.
      */
-    event ProtocolPauseSet(address indexed securityAdmin_, bool indexed protocolPaused_);
+    event ProtocolPauseSet(address indexed securityAdmin_, bool protocolPaused_);
 
     /**
      *  @dev   The security admin was set.
@@ -176,14 +184,14 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param borrower_ The address of the borrower.
      *  @param isValid_  The validity of the borrower.
      */
-    event ValidBorrowerSet(address indexed borrower_, bool indexed isValid_);
+    event ValidBorrowerSet(address indexed borrower_, bool isValid_);
 
     /**
      *  @dev   A valid asset was set.
      *  @param collateralAsset_ The address of the collateral asset.
      *  @param isValid_         The validity of the collateral asset.
      */
-     event ValidCollateralAssetSet(address indexed collateralAsset_, bool indexed isValid_);
+    event ValidCollateralAssetSet(address indexed collateralAsset_, bool isValid_);
 
     /**
      *  @dev   A valid factory was set.
@@ -191,7 +199,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param factory_    The address of the factory.
      *  @param isValid_    The validity of the factory.
      */
-    event ValidFactorySet(bytes32 indexed factoryKey_, address indexed factory_, bool indexed isValid_);
+    event ValidFactorySet(bytes32 indexed factoryKey_, address indexed factory_, bool isValid_);
 
     /**
      *  @dev   A valid instance was set.
@@ -199,32 +207,40 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param instance_    The address of the instance.
      *  @param isValid_     The validity of the instance.
      */
-    event ValidInstanceSet(bytes32 indexed instanceKey_, address indexed instance_, bool indexed isValid_);
+    event ValidInstanceSet(bytes32 indexed instanceKey_, address indexed instance_, bool isValid_);
 
     /**
      *  @dev   A valid asset was set.
      *  @param poolAsset_ The address of the asset.
      *  @param isValid_   The validity of the asset.
      */
-    event ValidPoolAssetSet(address indexed poolAsset_, bool indexed isValid_);
+    event ValidPoolAssetSet(address indexed poolAsset_, bool isValid_);
 
     /**
      *  @dev   A valid pool delegate was set.
      *  @param account_ The address the account.
      *  @param isValid_ The validity of the asset.
      */
-    event ValidPoolDelegateSet(address indexed account_, bool indexed isValid_);
+    event ValidPoolDelegateSet(address indexed account_, bool isValid_);
 
     /**
      *  @dev   A valid pool deployer was set.
      *  @param poolDeployer_ The address the account.
      *  @param isValid_      The validity of the asset.
      */
-    event ValidPoolDeployerSet(address indexed poolDeployer_, bool indexed isValid_);
+    event ValidPoolDeployerSet(address indexed poolDeployer_, bool isValid_);
 
     /**************************************************************************************************************************************/
     /*** State Variables                                                                                                                ***/
     /**************************************************************************************************************************************/
+
+    /**
+     *  @dev    Gets whether the account can deploy or not from the factory.
+     *  @param  factory_       The address of the factory.
+     *  @param  account_       The address of the account.
+     *  @return canDeployFrom_ Whether the account can deploy or not from the factory.
+     */
+    function canDeployFrom(address factory_, address account_) external view returns (bool canDeployFrom_);
 
     /**
      *  @dev    Gets the default timelock parameters.
@@ -235,60 +251,60 @@ interface IMapleGlobals is INonTransparentProxied {
 
     /**
      *  @dev    Gets the validity of a borrower.
-     *  @param  borrower_ The address of the borrower to query.
-     *  @return isValid_  A boolean indicating the validity of the borrower.
+     *  @param  borrower_   The address of the borrower to query.
+     *  @return isBorrower_ A boolean indicating the validity of the borrower.
      */
-    function isBorrower(address borrower_) external view returns (bool isValid_);
+    function isBorrower(address borrower_) external view returns (bool isBorrower_);
 
     /**
      *  @dev    Gets the validity of a collateral asset.
-     *  @param  collateralAsset_ The address of the collateralAsset to query.
-     *  @return isValid_         A boolean indicating the validity of the collateral asset.
+     *  @param  collateralAsset_   The address of the collateralAsset to query.
+     *  @return isCollateralAsset_ A boolean indicating the validity of the collateral asset.
      */
-    function isCollateralAsset(address collateralAsset_) external view returns (bool isValid_);
+    function isCollateralAsset(address collateralAsset_) external view returns (bool isCollateralAsset_);
 
     /**
      *  @dev    Gets the validity of a factory.
      *  @param  factoryId_ The address of the factory to query.
      *  @param  factory_   The address of the factory to query.
-     *  @return isValid_   A boolean indicating the validity of the factory.
+     *  @return isFactory_ A boolean indicating the validity of the factory.
      */
-    function isFactory(bytes32 factoryId_, address factory_) external view returns (bool isValid_);
+    function isFactory(bytes32 factoryId_, address factory_) external view returns (bool isFactory_);
 
     /**
      *  @dev    Gets the validity of a instance.
      *  @param  instanceId_ The key of the instance to query.
      *  @param  instance_   The address of the instance to query.
-     *  @return isValid_    A boolean indicating the validity of the instance.
+     *  @return isInstance_ A boolean indicating the validity of the instance.
      */
-    function isInstanceOf(bytes32 instanceId_, address instance_) external view returns (bool isValid_);
+    function isInstanceOf(bytes32 instanceId_, address instance_) external view returns (bool isInstance_);
 
     /**
      *  @dev    Gets the validity of a pool asset.
-     *  @param  poolAsset_ The address of the poolAsset to query.
-     *  @return isValid_   A boolean indicating the validity of the pool asset.
+     *  @param  poolAsset_   The address of the poolAsset to query.
+     *  @return isPoolAsset_ A boolean indicating the validity of the pool asset.
      */
-    function isPoolAsset(address poolAsset_) external view returns (bool isValid_);
+    function isPoolAsset(address poolAsset_) external view returns (bool isPoolAsset_);
 
     /**
      *  @dev    Gets the validity of a pool delegate.
-     *  @param  account_  The address of the account to query.
-     *  @return isValid_  A boolean indicating the validity of the pool delegate.
+     *  @param  account_        The address of the account to query.
+     *  @return isPoolDelegate_ A boolean indicating the validity of the pool delegate.
      */
-    function isPoolDelegate(address account_) external view returns (bool isValid_);
+    function isPoolDelegate(address account_) external view returns (bool isPoolDelegate_);
 
     /**
      *  @dev    Gets the validity of a pool deployer.
-     *  @param  account_  The address of the account to query.
-     *  @return isValid_  A boolean indicating the validity of the pool deployer.
+     *  @param  account_        The address of the account to query.
+     *  @return isPoolDeployer_ A boolean indicating the validity of the pool deployer.
      */
-    function isPoolDeployer(address account_) external view returns (bool isValid_);
+    function isPoolDeployer(address account_) external view returns (bool isPoolDeployer_);
 
     /**
-    *  @dev    Gets the latest price for an asset.
-    *  @param  asset_       The address of the asset to query.
-    *  @return latestPrice_ The latest price for the asset.
-    */
+     *  @dev    Gets the latest price for an asset.
+     *  @param  asset_       The address of the asset to query.
+     *  @return latestPrice_ The latest price for the asset.
+     */
     function getLatestPrice(address asset_) external view returns (uint256 latestPrice_);
 
     /**
@@ -298,10 +314,10 @@ interface IMapleGlobals is INonTransparentProxied {
     function governor() external view returns (address governor_);
 
     /**
-    *  @dev    Gets the manual override price for an asset.
-    *  @param  asset_               The address of the asset to query.
-    *  @return manualOverridePrice_ The manual override price for the asset.
-    */
+     *  @dev    Gets the manual override price for an asset.
+     *  @param  asset_               The address of the asset to query.
+     *  @return manualOverridePrice_ The manual override price for the asset.
+     */
     function manualOverridePrice(address asset_) external view returns (uint256 manualOverridePrice_);
 
     /**
@@ -400,8 +416,11 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return timestamp   The timestamp of the next scheduled call.
      *  @return dataHash    The hash of data fot the scheduled call.
      */
-    function scheduledCalls(address caller_, address contract_, bytes32 functionId_)
-        external view returns (uint256 timestamp, bytes32 dataHash);
+    function scheduledCalls(
+        address caller_,
+        address contract_,
+        bytes32 functionId_
+    ) external view returns (uint256 timestamp, bytes32 dataHash);
 
     /**
      *  @dev    Gets security admin address.
@@ -422,8 +441,15 @@ interface IMapleGlobals is INonTransparentProxied {
     /*** Governor Transfer Functions                                                                                                    ***/
     /**************************************************************************************************************************************/
 
+    /**
+     *  @dev Accepts the governorship if the caller is the `pendingGovernor`.
+     */
     function acceptGovernor() external;
 
+    /**
+     *  @dev   Sets the pending governor.
+     *  @param pendingGovernor_ The new pending governor.
+     */
     function setPendingGovernor(address pendingGovernor_) external;
 
     /**************************************************************************************************************************************/
@@ -491,6 +517,14 @@ interface IMapleGlobals is INonTransparentProxied {
     /**************************************************************************************************************************************/
 
     /**
+     *  @dev   Sets whether an account can deploying an instance from a particular factory.
+     *  @param factory_       The address of the factory.
+     *  @param account_       The address of the account.
+     *  @param canDeployFrom_ Whether the account can deploy or not from the factory.
+     */
+    function setCanDeploy(address factory_, address account_, bool canDeployFrom_) external;
+
+    /**
      *  @dev   Sets the validity of the borrower.
      *  @param borrower_ The address of the borrower to set the validity for.
      *  @param isValid_  A boolean indicating the validity of the borrower.
@@ -502,7 +536,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param collateralAsset_ The address of the collateral asset to set the validity for.
      *  @param isValid_         A boolean indicating the validity of the collateral asset.
      */
-    function setValidCollateralAsset(address collateralAsset_ , bool isValid_) external;
+    function setValidCollateralAsset(address collateralAsset_, bool isValid_) external;
 
     /**
      *  @dev   Sets the validity of the factory.
@@ -616,7 +650,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param durations_   The durations for the timelock window.
      */
     function setTimelockWindows(
-        address contract_,
+        address            contract_,
         bytes32[] calldata functionIds_,
         uint128[] calldata delays_,
         uint128[] calldata durations_
@@ -666,7 +700,11 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param  callData_   The of the parameters to pass to the function.
      *  @return isValid_    True if the call is scheduled, false otherwise.
      */
-    function isValidScheduledCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_)
-        external view returns (bool isValid_);
+    function isValidScheduledCall(
+        address          caller_,
+        address          contract_,
+        bytes32          functionId_,
+        bytes   calldata callData_
+    ) external view returns (bool isValid_);
 
 }
