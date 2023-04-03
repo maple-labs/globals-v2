@@ -78,6 +78,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => PoolDelegate) public override poolDelegates;
 
+    mapping(address => mapping(address => bool)) public override canDeployFrom;
+
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
     /**************************************************************************************************************************************/
@@ -167,6 +169,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************************************************************************************************************************/
     /*** Allowlist Setters                                                                                                              ***/
     /**************************************************************************************************************************************/
+
+    function setCanDeploy(address factory_, address account_, bool canDeployFrom_) external override isGovernor {
+        canDeployFrom[factory_][account_] = canDeployFrom_;
+        emit CanDeployFromSet(factory_, account_, canDeployFrom_);
+    }
 
     function setValidBorrower(address borrower_, bool isValid_) external override isGovernor {
         isBorrower[borrower_] = isValid_;
@@ -265,7 +272,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setTimelockWindows(
-        address contract_,
+        address            contract_,
         bytes32[] calldata functionIds_,
         uint128[] calldata delays_,
         uint128[] calldata durations_
@@ -308,10 +315,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function unscheduleCall(
-        address caller_,
-        address contract_,
-        bytes32 functionId_,
-        bytes calldata callData_
+        address          caller_,
+        address          contract_,
+        bytes32          functionId_,
+        bytes   calldata callData_
     )
         external override isGovernor
     {
