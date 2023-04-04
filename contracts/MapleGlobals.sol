@@ -80,6 +80,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => mapping(address => bool)) public override canDeployFrom;
 
+    mapping(address => bool) public override isContractPaused;
+
+    mapping(address => mapping(bytes4 => bool)) public override isFunctionUnpaused;
+
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
     /**************************************************************************************************************************************/
@@ -160,10 +164,34 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Boolean Setters                                                                                                                ***/
     /**************************************************************************************************************************************/
 
+    function setContactPause(address contract_, bool contractPaused_) external override {
+        require(msg.sender == securityAdmin || msg.sender == admin(), "MG:SCP:NO_AUTH");
+
+        emit ContractPauseSet(
+            msg.sender,
+            contract_,
+            isContractPaused[contract_] = contractPaused_
+        );
+    }
+
+    function setFunctionUnpause(address contract_, bytes4 sig_, bool functionUnpaused_) external override {
+        require(msg.sender == securityAdmin || msg.sender == admin(), "MG:SFU:NO_AUTH");
+
+        emit FunctionUnpauseSet(
+            msg.sender,
+            contract_,
+            sig_,
+            isFunctionUnpaused[contract_][sig_] = functionUnpaused_
+        );
+    }
+
     function setProtocolPause(bool protocolPaused_) external override {
-        require(msg.sender == securityAdmin, "MG:SPP:NOT_SECURITY_ADMIN");
-        protocolPaused = protocolPaused_;
-        emit ProtocolPauseSet(msg.sender, protocolPaused_);
+        require(msg.sender == securityAdmin || msg.sender == admin(), "MG:SPP:NO_AUTH");
+
+        emit ProtocolPauseSet(
+            msg.sender,
+            protocolPaused = protocolPaused_
+        );
     }
 
     /**************************************************************************************************************************************/
@@ -380,6 +408,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function isFactory(bytes32 key_, address factory_) external view override returns (bool isFactory_) {
         isFactory_ = isInstanceOf[key_][factory_];
+    }
+
+    function isFunctionPaused(bytes4 sig_) external view override returns (bool functionIsPaused_) {
+        functionIsPaused_ = (protocolPaused || isContractPaused[msg.sender]) && !isFunctionUnpaused[msg.sender][sig_];
     }
 
     function isPoolDelegate(address account_) external view override returns (bool isPoolDelegate_) {

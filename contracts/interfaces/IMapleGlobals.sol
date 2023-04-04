@@ -50,6 +50,14 @@ interface IMapleGlobals is INonTransparentProxied {
     event CanDeployFromSet(address indexed factory_, address indexed account_, bool canDeployFrom_);
 
     /**
+     *  @dev   The paused state for a given protocol contract was set.
+     *  @param caller_         The address of the security admin or governor that performed the action.
+     *  @param contract_       The address of a contract in the protocol.
+     *  @param contractPaused_ Whether the contract is uniquely paused.
+     */
+    event ContractPauseSet(address indexed caller_, address indexed contract_, bool contractPaused_);
+
+    /**
      *  @dev   The default parameters for the time lock has been set.
      *  @param previousDelay_    The previous required delay.
      *  @param currentDelay_     The newly set required delay.
@@ -57,6 +65,15 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param currentDuration_  The newly set required duration.
      */
     event DefaultTimelockParametersSet(uint256 previousDelay_, uint256 currentDelay_, uint256 previousDuration_, uint256 currentDuration_);
+
+    /**
+     *  @dev   The paused state for a function of a given protocol contract was set.
+     *  @param caller_           The address of the security admin or governor that performed the action.
+     *  @param contract_         The address of a contract in the protocol.
+     *  @param sig_              The function signature within the contract.
+     *  @param functionUnpaused_ Whether the contract's function is uniquely unpaused.
+     */
+    event FunctionUnpauseSet(address indexed caller_, address indexed contract_, bytes4 indexed sig_, bool functionUnpaused_);
 
     /**
      *  @dev   The governorship has been accepted.
@@ -158,10 +175,10 @@ interface IMapleGlobals is INonTransparentProxied {
 
     /**
      *  @dev   The protocol pause was set to a new state.
-     *  @param securityAdmin_  The address of the security admin.
+     *  @param caller_         The address of the security admin or governor that performed the action.
      *  @param protocolPaused_ The protocol paused state.
      */
-    event ProtocolPauseSet(address indexed securityAdmin_, bool protocolPaused_);
+    event ProtocolPauseSet(address indexed caller_, bool protocolPaused_);
 
     /**
      *  @dev   The security admin was set.
@@ -231,7 +248,7 @@ interface IMapleGlobals is INonTransparentProxied {
     event ValidPoolDeployerSet(address indexed poolDeployer_, bool isValid_);
 
     /**************************************************************************************************************************************/
-    /*** State Variables                                                                                                                ***/
+    /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
 
     /**
@@ -264,12 +281,34 @@ interface IMapleGlobals is INonTransparentProxied {
     function isCollateralAsset(address collateralAsset_) external view returns (bool isCollateralAsset_);
 
     /**
+     *  @dev    Gets whether a contract is uniquely paused.
+     *  @param  contract_         The address of a contract in the protocol.
+     *  @return isContractPaused_ Whether the contract is uniquely paused.
+     */
+    function isContractPaused(address contract_) external view returns (bool isContractPaused_);
+
+    /**
      *  @dev    Gets the validity of a factory.
      *  @param  factoryId_ The address of the factory to query.
      *  @param  factory_   The address of the factory to query.
      *  @return isFactory_ A boolean indicating the validity of the factory.
      */
     function isFactory(bytes32 factoryId_, address factory_) external view returns (bool isFactory_);
+
+    /**
+     *  @dev    Gets whether a calling contract's function is paused.
+     *  @param  sig_              The function signature within the contract.
+     *  @return isFunctionPaused_ Whether the contract's function is paused.
+     */
+    function isFunctionPaused(bytes4 sig_) external view returns (bool isFunctionPaused_);
+
+    /**
+     *  @dev    Gets whether a contract's function is uniquely unpaused. A false does not imply it is paused.
+     *  @param  contract_           The address of a contract in the protocol.
+     *  @param  sig_                The function signature within the contract.
+     *  @return isFunctionUnpaused_ Whether the contract's function is uniquely unpaused.
+     */
+    function isFunctionUnpaused(address contract_, bytes4 sig_) external view returns (bool isFunctionUnpaused_);
 
     /**
      *  @dev    Gets the validity of a instance.
@@ -505,6 +544,21 @@ interface IMapleGlobals is INonTransparentProxied {
     /**************************************************************************************************************************************/
     /*** Boolean Setters                                                                                                                ***/
     /**************************************************************************************************************************************/
+
+    /**
+     *  @dev   Sets whether a contract is uniquely paused.
+     *  @param contract_       The address of a contract in the protocol.
+     *  @param contractPaused_ Whether the contract is uniquely paused.
+     */
+    function setContactPause(address contract_, bool contractPaused_) external;
+
+    /**
+     *  @dev   Sets whether a contract's function is uniquely unpaused. A false does not imply it is paused.
+     *  @param contract_         The address of a contract in the protocol.
+     *  @param sig_              The function signature within the contract.
+     *  @param functionUnpaused_ Whether the contract's function is uniquely unpaused.
+     */
+    function setFunctionUnpause(address contract_, bytes4 sig_, bool functionUnpaused_) external;
 
     /**
      *  @dev   Sets the protocol pause.
