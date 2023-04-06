@@ -45,7 +45,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @dev   An account has been allowed/disallowed from deploying an instance from a particular factory.
      *  @param factory_       The address of the factory.
      *  @param account_       The address of the account.
-     *  @param canDeployFrom_ Whether the account can deploy or not from the factory.
+     *  @param canDeployFrom_ Whether the account can deploy from the factory.
      */
     event CanDeployFromSet(address indexed factory_, address indexed account_, bool canDeployFrom_);
 
@@ -254,7 +254,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @dev    Gets whether a caller account can deploy from a factory.
      *  @param  factory_       The address of the factory.
      *  @param  caller_        The address of the account calling the factory.
-     *  @return canDeployFrom_ Whether the account can deploy or not from the factory.
+     *  @return canDeployFrom_ Whether the account can deploy from the factory.
      */
     function canDeployFrom(address factory_, address caller_) external view returns (bool canDeployFrom_);
 
@@ -302,6 +302,14 @@ interface IMapleGlobals is INonTransparentProxied {
     function isFunctionPaused(bytes4 sig_) external view returns (bool isFunctionPaused_);
 
     /**
+     *  @dev    Gets whether a contract's function is paused.
+     *  @param  contract_         The address of a contract in the protocol.
+     *  @param  sig_              The function signature within the contract.
+     *  @return isFunctionPaused_ Whether the contract's function is paused.
+     */
+    function isFunctionPaused(address contract_, bytes4 sig_) external view returns (bool isFunctionPaused_);
+
+    /**
      *  @dev    Gets whether a contract's function is uniquely unpaused. A false does not imply it is paused.
      *  @param  contract_           The address of a contract in the protocol.
      *  @param  sig_                The function signature within the contract.
@@ -310,12 +318,12 @@ interface IMapleGlobals is INonTransparentProxied {
     function isFunctionUnpaused(address contract_, bytes4 sig_) external view returns (bool isFunctionUnpaused_);
 
     /**
-     *  @dev    Gets the validity of a instance.
-     *  @param  instanceId_ The key of the instance to query.
-     *  @param  instance_   The address of the instance to query.
-     *  @return isInstance_ A boolean indicating the validity of the instance.
+     *  @dev    Gets wether an instance is of some instance key.
+     *  @param  instanceKey_ The key of some instance type.
+     *  @param  instance_    The address of an instance.
+     *  @return isInstance_  A boolean indicating whether the instance is of the instance key.
      */
-    function isInstanceOf(bytes32 instanceId_, address instance_) external view returns (bool isInstance_);
+    function isInstanceOf(bytes32 instanceKey_, address instance_) external view returns (bool isInstance_);
 
     /**
      *  @dev    Gets the validity of a pool asset.
