@@ -211,14 +211,6 @@ interface IMapleGlobals is INonTransparentProxied {
     event ValidCollateralAssetSet(address indexed collateralAsset_, bool isValid_);
 
     /**
-     *  @dev   A valid factory was set.
-     *  @param factoryKey_ The key of the factory.
-     *  @param factory_    The address of the factory.
-     *  @param isValid_    The validity of the factory.
-     */
-    event ValidFactorySet(bytes32 indexed factoryKey_, address indexed factory_, bool isValid_);
-
-    /**
      *  @dev   A valid instance was set.
      *  @param instanceKey_ The key of the instance.
      *  @param instance_    The address of the instance.
@@ -252,12 +244,19 @@ interface IMapleGlobals is INonTransparentProxied {
     /**************************************************************************************************************************************/
 
     /**
-     *  @dev    Gets whether the account can deploy or not from the factory.
+     *  @dev    Gets whether a caller account can deploy from the factory calling this function.
+     *  @param  caller_    The address of the account calling the factory.
+     *  @return canDeploy_ Whether the account can deploy from the factory.
+     */
+    function canDeploy(address caller_) external view returns (bool canDeploy_);
+
+    /**
+     *  @dev    Gets whether a caller account can deploy from a factory.
      *  @param  factory_       The address of the factory.
-     *  @param  account_       The address of the account.
+     *  @param  caller_        The address of the account calling the factory.
      *  @return canDeployFrom_ Whether the account can deploy or not from the factory.
      */
-    function canDeployFrom(address factory_, address account_) external view returns (bool canDeployFrom_);
+    function canDeployFrom(address factory_, address caller_) external view returns (bool canDeployFrom_);
 
     /**
      *  @dev    Gets the default timelock parameters.
@@ -593,14 +592,6 @@ interface IMapleGlobals is INonTransparentProxied {
     function setValidCollateralAsset(address collateralAsset_, bool isValid_) external;
 
     /**
-     *  @dev   Sets the validity of the factory.
-     *  @param factoryKey_ The key of the factory to set the validity for.
-     *  @param factory_    The address of the factory to set the validity for.
-     *  @param isValid_    Boolean indicating the validity of the factory.
-     */
-    function setValidFactory(bytes32 factoryKey_, address factory_, bool isValid_) external;
-
-    /**
      *  @dev   Sets the validity of the instance.
      *  @param instanceKey_ The key of the instance to set the validity for.
      *  @param instance_    The address of the instance to set the validity for.
@@ -624,10 +615,10 @@ interface IMapleGlobals is INonTransparentProxied {
 
     /**
      *  @dev   Sets the validity of the pool deployer.
-     *  @param poolDeployer_ The address of the pool deployer to set the validity for.
-     *  @param isValid_      A boolean indicating the validity of the pool deployer.
+     *  @param account_        The address of the pool deployer to set the validity for.
+     *  @param isPoolDeployer_ A boolean indicating the validity of the pool deployer.
      */
-    function setValidPoolDeployer(address poolDeployer_, bool isValid_) external;
+    function setValidPoolDeployer(address account_, bool isPoolDeployer_) external;
 
     /**************************************************************************************************************************************/
     /*** Price Setters                                                                                                                  ***/

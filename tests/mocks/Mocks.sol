@@ -42,6 +42,7 @@ contract MockChainlinkOracle {
 
 contract MockPoolManager {
 
+    address public factory;
     address public poolDelegate;
 
     constructor(address poolDelegate_) {
@@ -49,5 +50,24 @@ contract MockPoolManager {
     }
 
     function setActive(bool active_) external { }
+
+    function __setFactory(address factory_) external {
+        factory = factory_;
+    }
+
+}
+
+contract MockProxyFactory {
+
+    bool _isInstance;
+
+    function isInstance(address instance_) external view returns (bool isInstance_) {
+        instance_;
+        isInstance_ = _isInstance;
+    }
+
+    function __setIsInstance(bool isInstance_) external {
+        _isInstance = isInstance_;
+    }
 
 }

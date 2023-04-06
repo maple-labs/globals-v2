@@ -16,6 +16,18 @@ interface IChainlinkAggregatorV3Like {
 
 }
 
+interface IProxyLike {
+
+    function factory() external view returns (address factory_);
+
+}
+
+interface IProxyFactoryLike {
+
+    function isInstance(address instance_) external view returns (bool isInstance_);
+
+}
+
 interface IPoolLike {
 
     function manager() external view returns (address manager_);

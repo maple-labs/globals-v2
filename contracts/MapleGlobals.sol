@@ -5,7 +5,7 @@ import { NonTransparentProxied } from "../modules/non-transparent-proxy/contract
 
 import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
 
-import { IChainlinkAggregatorV3Like, IPoolManagerLike } from "./interfaces/Interfaces.sol";
+import { IChainlinkAggregatorV3Like, IPoolManagerLike, IProxyLike, IProxyFactoryLike } from "./interfaces/Interfaces.sol";
 
 /*
 
@@ -59,7 +59,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isCollateralAsset;
     mapping(address => bool) public override isPoolAsset;
-    mapping(address => bool) public override isPoolDeployer;
+
+    mapping(address => bool) internal _isPoolDeployer;  // NOTE: Deprecated, but currently allowing only disabling.
 
     mapping(address => uint256) public override manualOverridePrice;
     mapping(address => uint256) public override maxCoverLiquidationPercent;
@@ -78,11 +79,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => PoolDelegate) public override poolDelegates;
 
-    mapping(address => mapping(address => bool)) public override canDeployFrom;
-
     mapping(address => bool) public override isContractPaused;
 
     mapping(address => mapping(bytes4 => bool)) public override isFunctionUnpaused;
+
+    mapping(address => mapping(address => bool)) internal _canDeployFrom;
 
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
@@ -199,7 +200,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************************************************************************************************************************/
 
     function setCanDeploy(address factory_, address account_, bool canDeployFrom_) external override isGovernor {
-        canDeployFrom[factory_][account_] = canDeployFrom_;
+        _canDeployFrom[factory_][account_] = canDeployFrom_;
         emit CanDeployFromSet(factory_, account_, canDeployFrom_);
     }
 
@@ -211,12 +212,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function setValidCollateralAsset(address collateralAsset_, bool isValid_) external override isGovernor {
         isCollateralAsset[collateralAsset_] = isValid_;
         emit ValidCollateralAssetSet(collateralAsset_, isValid_);
-    }
-
-    // NOTE: This function is kept for backwards compatibility with the testing suite, but `setValidInstance` should be used instead.
-    function setValidFactory(bytes32 factoryKey_, address factory_, bool isValid_) external override isGovernor {
-        isInstanceOf[factoryKey_][factory_] = isValid_;
-        emit ValidFactorySet(factoryKey_, factory_, isValid_);
     }
 
     function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external override isGovernor {
@@ -239,9 +234,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidPoolDelegateSet(account_, isValid_);
     }
 
-    function setValidPoolDeployer(address poolDeployer_, bool isValid_) external override isGovernor {
-        isPoolDeployer[poolDeployer_] = isValid_;
-        emit ValidPoolDeployerSet(poolDeployer_, isValid_);
+    function setValidPoolDeployer(address account_, bool isPoolDeployer_) external override isGovernor {
+        // NOTE: Explicit PoolDeployers via mapping are deprecated in favour of generalized canDeployFrom mapping.
+        require(!isPoolDeployer_, "MG:SVPD:ONLY_DISABLING");
+
+        emit ValidPoolDeployerSet(account_, _isPoolDeployer[account_] = isPoolDeployer_);
     }
 
     /**************************************************************************************************************************************/
@@ -379,6 +376,16 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
 
+    function canDeploy(address caller_) public override view returns (bool canDeploy_) {
+        canDeploy_ = canDeployFrom(msg.sender, caller_);
+    }
+
+    function canDeployFrom(address factory_, address caller_) public override view returns (bool canDeployFrom_) {
+        // Since a PoolManager is often deployed in the same transaction as the LoanManagers it deploys,
+        // check if `factory_` is a LoanManagerFactory and the caller is a PoolManager, before defaulting to the `_canDeployFrom` mapping.
+        canDeployFrom_ = (isInstanceOf["LOAN_MANAGER_FACTORY"][factory_] && _isPoolManager(caller_)) || _canDeployFrom[factory_][caller_];
+    }
+
     function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
         // If governor has overridden price because of oracle outage, return overridden price.
         if (manualOverridePrice[asset_] != 0) return manualOverridePrice[asset_];
@@ -406,8 +413,17 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         governor_ = admin();
     }
 
-    function isFactory(bytes32 key_, address factory_) external view override returns (bool isFactory_) {
-        isFactory_ = isInstanceOf[key_][factory_];
+    // NOTE: This is only used by the LiquidatorFactory to determine if the factory of it's caller is a FixedTermLoanManagerFactory.
+    // NOTE: Original liquidatorFactory checks isFactory("LOAN_MANAGER", address(this));
+    function isFactory(bytes32 factoryId_, address factory_) external view override returns (bool isFactory_) {
+        // NOTE: Key is not used as this function is deprecated and narrowed.
+        factoryId_;
+
+        // Revert if caller is not LiquidatorFactory, the only allowed caller of this deprecated function.
+        require(isInstanceOf["LIQUIDATOR_FACTORY"][msg.sender], "MG:IF:NOT_LIQ_FACTORY");
+
+        // Determine if the `factory_` is a `FixedTermLoanManagerFactory`.
+        isFactory_ = isInstanceOf["FT_LOAN_MANAGER_FACTORY"][factory_];
     }
 
     function isFunctionPaused(bytes4 sig_) external view override returns (bool functionIsPaused_) {
@@ -418,6 +434,24 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         isPoolDelegate_ = poolDelegates[account_].isPoolDelegate;
     }
 
+    // NOTE: This is only used by FixedTermLoanManagerFactory, PoolManagerFactory, and WithdrawalManagerFactory, so it must return true for
+    //       any caller that is either:
+    //       - An actual PoolDeployer contract (in the case of a PoolManagerFactory or WithdrawalManagerFactory), or
+    //       - A PoolManager contract (in the case of a FixedTermLoanManagerFactory)
+    function isPoolDeployer(address caller_) external view override returns (bool isPoolDeployer_) {
+        // Revert if caller is not FixedTermLoanManagerFactory, PoolManagerFactory, or WithdrawalManagerFactory,
+        // the only allowed callers of this deprecated function.
+        require(
+            isInstanceOf["FT_LOAN_MANAGER_FACTORY"][msg.sender] ||
+            isInstanceOf["POOL_MANAGER_FACTORY"][msg.sender] ||
+            isInstanceOf["WITHDRAWAL_MANAGER_FACTORY"][msg.sender],
+            "MG:IPD:INVALID_FACTORY"
+        );
+
+        // This demonstrates that canDeploy() is a full replacement for isPoolDeployer().
+        isPoolDeployer_ = canDeploy(caller_);
+    }
+
     function ownedPoolManager(address account_) external view override returns (address poolManager_) {
         poolManager_ = poolDelegates[account_].ownedPoolManager;
     }
@@ -425,6 +459,12 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************************************************************************************************************************/
     /*** Helper Functions                                                                                                               ***/
     /**************************************************************************************************************************************/
+
+    function _isPoolManager(address contract_) internal view returns (bool isPoolManager_) {
+        address factory_ = IProxyLike(contract_).factory();
+
+        isPoolManager_ = (isInstanceOf["POOL_MANAGER_FACTORY"][factory_]) && IProxyFactoryLike(factory_).isInstance(contract_);
+    }
 
     function _setAddress(bytes32 slot_, address value_) private {
         assembly {

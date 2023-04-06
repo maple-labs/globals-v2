@@ -6,7 +6,12 @@ import { NonTransparentProxy } from "../modules/non-transparent-proxy/contracts/
 
 import { MapleGlobals } from "../contracts/MapleGlobals.sol";
 
-import { MockChainlinkOracle, MockPoolManager } from "./mocks/Mocks.sol";
+import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/Mocks.sol";
+
+// TODO: Add tests for:
+// - __isPoolDeployer harnessed view function
+// - canDeploy/canDeployFrom
+// - isPoolDeployer
 
 contract BaseMapleGlobalsTest is TestUtils {
 
@@ -462,34 +467,6 @@ contract SetValidCollateralTests is BaseMapleGlobalsTest {
 
 }
 
-contract SetValidFactoryTests is BaseMapleGlobalsTest {
-
-    function test_setValidFactory_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setValidFactory("TEST_FACTORY", SET_ADDRESS, true);
-
-        vm.prank(GOVERNOR);
-        globals.setValidFactory("TEST_FACTORY", SET_ADDRESS, true);
-    }
-
-    function test_setValidFactory() external {
-        vm.startPrank(GOVERNOR);
-
-        assertTrue(!globals.isFactory("TEST_FACTORY", SET_ADDRESS));
-
-        globals.setValidFactory("TEST_FACTORY", SET_ADDRESS, true);
-
-        assertTrue(globals.isFactory("TEST_FACTORY",    SET_ADDRESS));
-        assertTrue(globals.isInstanceOf("TEST_FACTORY", SET_ADDRESS));
-
-        globals.setValidFactory("TEST_FACTORY", SET_ADDRESS, false);
-
-        assertTrue(!globals.isFactory("TEST_FACTORY",    SET_ADDRESS));
-        assertTrue(!globals.isInstanceOf("TEST_FACTORY", SET_ADDRESS));
-    }
-
-}
-
 contract SetValidInstanceOfTests is BaseMapleGlobalsTest {
 
     function test_setValidInstanceOf_notGovernor() external {
@@ -504,17 +481,14 @@ contract SetValidInstanceOfTests is BaseMapleGlobalsTest {
         vm.startPrank(GOVERNOR);
 
         assertTrue(!globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
-        assertTrue(!globals.isFactory("TEST_INSTANCE",    SET_ADDRESS));  // Backwards compatibility
 
         globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, true);
 
         assertTrue(globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
-        assertTrue(globals.isFactory("TEST_INSTANCE",    SET_ADDRESS));  // Backwards compatibility
 
         globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, false);
 
         assertTrue(!globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
-        assertTrue(!globals.isFactory("TEST_INSTANCE",    SET_ADDRESS));  // Backwards compatibility
     }
 
 }
@@ -549,24 +523,16 @@ contract SetValidPoolDeployer is BaseMapleGlobalsTest {
 
     function test_setValidDeployer_notGovernor() external {
         vm.expectRevert("MG:NOT_GOVERNOR");
-        globals.setValidPoolDeployer(SET_ADDRESS, true);
-
-        vm.prank(GOVERNOR);
-        globals.setValidPoolDeployer(SET_ADDRESS, true);
+        globals.setValidPoolDeployer(SET_ADDRESS, false);
     }
 
     function test_setValidDeployer() external {
-        vm.startPrank(GOVERNOR);
-
-        assertTrue(!globals.isPoolDeployer(SET_ADDRESS));
-
+        vm.expectRevert("MG:SVPD:ONLY_DISABLING");
+        vm.prank(GOVERNOR);
         globals.setValidPoolDeployer(SET_ADDRESS, true);
 
-        assertTrue(globals.isPoolDeployer(SET_ADDRESS));
-
+        vm.prank(GOVERNOR);
         globals.setValidPoolDeployer(SET_ADDRESS, false);
-
-        assertTrue(!globals.isPoolDeployer(SET_ADDRESS));
     }
 }
 
@@ -1265,6 +1231,161 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.prank(CONTRACT);
         assertTrue(!globals.isFunctionPaused(SIG));
+    }
+
+}
+
+contract IsPoolDeployerTest is BaseMapleGlobalsTest {
+
+    MockPoolManager  poolManager;
+    MockProxyFactory poolManagerFactory;
+
+    function setUp() public override {
+        super.setUp();
+
+        poolManagerFactory = new MockProxyFactory();
+        poolManager        = new MockPoolManager(GOVERNOR);
+
+        poolManager.__setFactory(address(poolManagerFactory));
+
+        vm.prank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(poolManagerFactory), true);
+    }
+
+    function test_isPoolDeployer_invalidFactory() external {
+        vm.expectRevert("MG:IPD:INVALID_FACTORY");
+        globals.isPoolDeployer(address(0));
+    }
+
+    function test_isPoolDeployer_fixedTermLoanFactory_deployerCannotDeploy() external {
+        address instance = address(new Address());
+        address caller   = address(new Address());
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance, true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(!globals.isPoolDeployer(caller));
+    }
+
+    function test_isPoolDeployer_fixedTermLoanFactory_poolManagerNotInstance() external {
+        address instance = address(new Address());
+
+        poolManagerFactory = new MockProxyFactory();
+        poolManager        = new MockPoolManager(address(0));
+
+        poolManager.__setFactory(address(poolManagerFactory));
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY",    address(poolManagerFactory), true);
+        globals.setValidInstanceOf("LOAN_MANAGER_FACTORY",    instance,                    true);
+        globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance,                    true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(!globals.isPoolDeployer(address(poolManager)));
+    }
+
+    function test_isPoolDeployer_fixedTermLoanFactory_poolManagerNotFromValidFactory() external {
+        address instance = address(new Address());
+
+        poolManagerFactory = new MockProxyFactory();
+        poolManager        = new MockPoolManager(address(0));
+
+        poolManager.__setFactory(address(poolManagerFactory));
+        poolManagerFactory.__setIsInstance(true);
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY",    address(poolManagerFactory), false);
+        globals.setValidInstanceOf("LOAN_MANAGER_FACTORY",    instance,                    true);
+        globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance,                    true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(!globals.isPoolDeployer(address(poolManager)));
+    }
+
+    function test_isPoolDeployer_fixedTermLoanFactory_deployerIsPoolManager() external {
+        address instance = address(new Address());
+
+        poolManagerFactory = new MockProxyFactory();
+        poolManager        = new MockPoolManager(address(0));
+
+        poolManager.__setFactory(address(poolManagerFactory));
+        poolManagerFactory.__setIsInstance(true);
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY",    address(poolManagerFactory), true);
+        globals.setValidInstanceOf("LOAN_MANAGER_FACTORY",    instance,                    true);
+        globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance,                    true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(globals.isPoolDeployer(address(poolManager)));
+    }
+
+    function test_isPoolDeployer_fixedTermLoanFactory_deployerCanDeploy() external {
+        address instance     = address(new Address());
+        address poolDeployer = address(new Address());
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance, true);
+        globals.setCanDeploy(instance, poolDeployer, true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(globals.isPoolDeployer(poolDeployer));
+    }
+
+    function test_isPoolDeployer_poolManagerFactory_deployerCannotDeploy() external {
+        address instance = address(new Address());
+        address caller   = address(new Address());
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", instance, true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(!globals.isPoolDeployer(caller));
+    }
+
+    function test_isPoolDeployer_poolManagerFactory_deployerCanDeploy() external {
+        address instance = address(new Address());
+        address caller   = address(new Address());
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", instance, true);
+        globals.setCanDeploy(instance, caller, true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(globals.isPoolDeployer(caller));
+    }
+
+    function test_isPoolDeployer_withdrawalManagerFactory_deployerCannotDeploy() external {
+        address instance = address(new Address());
+        address caller   = address(new Address());
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("WITHDRAWAL_MANAGER_FACTORY", instance, true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(!globals.isPoolDeployer(caller));
+    }
+
+    function test_isPoolDeployer_withdrawalManagerFactory_deployerCanDeploy() external {
+        address instance = address(new Address());
+        address caller   = address(new Address());
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("WITHDRAWAL_MANAGER_FACTORY", instance, true);
+        globals.setCanDeploy(instance, caller, true);
+        vm.stopPrank();
+
+        vm.prank(instance);
+        assertTrue(globals.isPoolDeployer(caller));
     }
 
 }
