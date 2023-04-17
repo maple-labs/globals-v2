@@ -1075,6 +1075,86 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
 /*** Getter Functions                                                                                                                   ***/
 /******************************************************************************************************************************************/
 
+// NOTE: Also tests `canDeploy`
+contract canDeployFromTests is BaseMapleGlobalsTest {
+
+    address internal CALLER        = address(new Address());
+    address internal FACTORY       = address(new Address());
+    address internal LM_FACTORY    = address(new Address());
+    address internal POOL_DELEGATE = address(new Address());
+
+    MockPoolManager  internal poolManager        = new MockPoolManager(POOL_DELEGATE);
+    MockProxyFactory internal poolManagerFactory = new MockProxyFactory();
+
+    function setUp() public override {
+        super.setUp();
+
+        poolManager.__setFactory(address(poolManagerFactory));
+
+        poolManagerFactory.__setIsInstance(true);
+    }
+
+    function test_canDeployFrom_invalidFactoryAndCaller() external {
+        bool canDeploy = globals.canDeployFrom(FACTORY, CALLER);
+
+        assertTrue(!canDeploy);
+
+        vm.prank(FACTORY);
+        canDeploy = globals.canDeploy(CALLER);
+
+        assertTrue(!canDeploy);
+    }
+
+    function test_canDeployFrom_validFactoryAndCaller() external {
+        vm.prank(GOVERNOR);
+        globals.setCanDeploy(FACTORY, CALLER, true);
+
+        bool canDeploy = globals.canDeployFrom(FACTORY, CALLER);
+
+        assertTrue(canDeploy);
+
+        vm.prank(FACTORY);
+        canDeploy = globals.canDeploy(CALLER);
+
+        assertTrue(canDeploy);
+    }
+
+    function test_canDeployFrom_poolManagerDeployingLoanManager() external {
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(poolManagerFactory), true);
+        globals.setValidInstanceOf("LOAN_MANAGER_FACTORY", LM_FACTORY,                  true);
+        vm.stopPrank();
+
+        bool canDeploy = globals.canDeployFrom(LM_FACTORY, address(poolManager));
+
+        assertTrue(canDeploy);
+
+        vm.prank(LM_FACTORY);
+        canDeploy = globals.canDeploy(address(poolManager));
+
+        assertTrue(canDeploy);
+    }
+
+    function test_canDeployFrom_poolManagerDeployingLoanManager_WithValidFactoryAndCallerSet() external {
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(poolManagerFactory), true);
+        globals.setValidInstanceOf("LOAN_MANAGER_FACTORY", LM_FACTORY,                  true);
+
+        globals.setCanDeploy(FACTORY, CALLER, true);
+        vm.stopPrank();
+
+        bool canDeploy = globals.canDeployFrom(LM_FACTORY, address(poolManager));
+
+        assertTrue(canDeploy);
+
+        vm.prank(LM_FACTORY);
+        canDeploy = globals.canDeploy(address(poolManager));
+
+        assertTrue(canDeploy);
+    }
+
+}
+
 contract GetLatestPriceTests is BaseMapleGlobalsTest {
 
     address internal ASSET = address(new Address());
