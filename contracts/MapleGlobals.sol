@@ -109,11 +109,18 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function activatePoolManager(address poolManager_) external override {
         _requireCalledByGovernor();
 
+        address factory_  = IPoolManagerLike(poolManager_).factory();
         address delegate_ = IPoolManagerLike(poolManager_).poolDelegate();
+
+        require(isInstanceOf["POOL_MANAGER_FACTORY"][factory_],          "MG:APM:INVALID_FACTORY");
+        require(IProxyFactoryLike(factory_).isInstance(poolManager_),    "MG:APM:INVALID_POOL_MANAGER");
+        require(poolDelegates[delegate_].isPoolDelegate,                 "MG:APM:INVALID_DELEGATE");
         require(poolDelegates[delegate_].ownedPoolManager == address(0), "MG:APM:ALREADY_OWNS");
 
         emit PoolManagerActivated(poolManager_, delegate_);
+
         poolDelegates[delegate_].ownedPoolManager = poolManager_;
+
         IPoolManagerLike(poolManager_).setActive(true);
     }
 

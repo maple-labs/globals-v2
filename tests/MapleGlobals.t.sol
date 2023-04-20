@@ -74,13 +74,65 @@ contract ActivatePoolTests is BaseMapleGlobalsTest {
 
     address internal admin = address(new Address());
 
-    MockPoolManager internal manager = new MockPoolManager(admin);
+    MockPoolManager  internal manager = new MockPoolManager(admin);
+    MockProxyFactory internal factory = new MockProxyFactory();
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(factory), true);
+        globals.setValidPoolDelegate(admin, true);
+        vm.stopPrank();
+
+        factory.__setIsInstance(true);
+        manager.__setFactory(address(factory));
+    }
 
     function test_activatePoolManager_notGovernor() external {
         vm.expectRevert("MG:NOT_GOV");
         globals.activatePoolManager(address(manager));
 
         vm.prank(GOVERNOR);
+        globals.activatePoolManager(address(manager));
+    }
+
+    function test_activatePoolManager_invalidFactory() external {
+        vm.startPrank(GOVERNOR);
+
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(factory), false);
+
+        vm.expectRevert("MG:APM:INVALID_FACTORY");
+        globals.activatePoolManager(address(manager));
+
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(factory), true);
+
+        globals.activatePoolManager(address(manager));
+    }
+
+    function test_activatePoolManager_invalidInstance() external {
+        vm.startPrank(GOVERNOR);
+
+        factory.__setIsInstance(false);
+
+        vm.expectRevert("MG:APM:INVALID_POOL_MANAGER");
+        globals.activatePoolManager(address(manager));
+
+        factory.__setIsInstance(true);
+
+        globals.activatePoolManager(address(manager));
+    }
+
+    function test_activatePoolManager_invalidDelegate() external {
+        vm.startPrank(GOVERNOR);
+
+        globals.setValidPoolDelegate(admin, false);
+
+        vm.expectRevert("MG:APM:INVALID_DELEGATE");
+        globals.activatePoolManager(address(manager));
+
+        globals.setValidPoolDelegate(admin, true);
+
         globals.activatePoolManager(address(manager));
     }
 
@@ -867,12 +919,20 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
     address internal POOL_DELEGATE_1 = address(new Address());
     address internal POOL_DELEGATE_2 = address(new Address());
 
-    MockPoolManager internal manager = new MockPoolManager(POOL_DELEGATE_1);
+    MockPoolManager  internal manager = new MockPoolManager(POOL_DELEGATE_1);
+    MockProxyFactory internal factory = new MockProxyFactory();
 
     function setUp() public override {
         super.setUp();
-        vm.prank(GOVERNOR);
+
+        factory.__setIsInstance(true);
+        manager.__setFactory(address(factory));
+
+        vm.startPrank(GOVERNOR);
+        globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(factory), true);
+        globals.setValidPoolDelegate(address(POOL_DELEGATE_1), true);
         globals.activatePoolManager(address(manager));
+        vm.stopPrank();
     }
 
     function test_transferOwnedPool_notPoolManager() external {
@@ -891,6 +951,8 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
         globals.setValidPoolDelegate(POOL_DELEGATE_2, true);
 
         MockPoolManager manager2 = new MockPoolManager(POOL_DELEGATE_2);
+
+        manager2.__setFactory(address(factory));
 
         vm.prank(GOVERNOR);
         globals.activatePoolManager(address(manager2));
