@@ -36,6 +36,8 @@ interface IPoolLike {
 
 interface IPoolManagerLike {
 
+    function factory() external view returns (address factory_);
+
     function poolDelegate() external view returns (address poolDelegate_);
 
     function setActive(bool active) external;
