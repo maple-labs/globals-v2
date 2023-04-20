@@ -171,7 +171,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Boolean Setters                                                                                                                ***/
     /**************************************************************************************************************************************/
 
-    function setContactPause(address contract_, bool contractPaused_) external override {
+    function setContractPause(address contract_, bool contractPaused_) external override {
         _requireCalledByAdmins();
 
         emit ContractPauseSet(
