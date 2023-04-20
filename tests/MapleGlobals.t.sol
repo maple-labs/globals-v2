@@ -244,7 +244,7 @@ contract SetDefaultTimelockParametersTests is BaseMapleGlobalsTest {
 /*** Boolean Setters                                                                                                                    ***/
 /******************************************************************************************************************************************/
 
-contract SetContactPauseTests is BaseMapleGlobalsTest {
+contract SetContractPauseTests is BaseMapleGlobalsTest {
 
     address internal CONTRACT       = address(new Address());
     address internal SECURITY_ADMIN = address(new Address());
@@ -256,35 +256,35 @@ contract SetContactPauseTests is BaseMapleGlobalsTest {
         globals.setSecurityAdmin(SECURITY_ADMIN);
     }
 
-    function test_setContactPause_notAuthorized() external {
+    function test_setContractPause_notAuthorized() external {
         vm.expectRevert("MG:NO_AUTH");
-        globals.setContactPause(CONTRACT, true);
+        globals.setContractPause(CONTRACT, true);
     }
 
-    function test_setContactPause_asGovernor() external {
+    function test_setContractPause_asGovernor() external {
         assertTrue(!globals.isContractPaused(CONTRACT));
 
         vm.prank(GOVERNOR);
-        globals.setContactPause(CONTRACT, true);
+        globals.setContractPause(CONTRACT, true);
 
         assertTrue(globals.isContractPaused(CONTRACT));
 
         vm.prank(GOVERNOR);
-        globals.setContactPause(CONTRACT, false);
+        globals.setContractPause(CONTRACT, false);
 
         assertTrue(!globals.isContractPaused(CONTRACT));
     }
 
-    function test_setContactPause_asSecurityAdmin() external {
+    function test_setContractPause_asSecurityAdmin() external {
         assertTrue(!globals.isContractPaused(CONTRACT));
 
         vm.prank(SECURITY_ADMIN);
-        globals.setContactPause(CONTRACT, true);
+        globals.setContractPause(CONTRACT, true);
 
         assertTrue(globals.isContractPaused(CONTRACT));
 
         vm.prank(SECURITY_ADMIN);
-        globals.setContactPause(CONTRACT, false);
+        globals.setContractPause(CONTRACT, false);
 
         assertTrue(!globals.isContractPaused(CONTRACT));
     }
@@ -305,12 +305,12 @@ contract SetFunctionUnpauseTests is BaseMapleGlobalsTest {
         globals.setSecurityAdmin(SECURITY_ADMIN);
     }
 
-    function test_setContactPause_notAuthorized() external {
+    function test_setContractPause_notAuthorized() external {
         vm.expectRevert("MG:NO_AUTH");
         globals.setFunctionUnpause(CONTRACT, SIG, true);
     }
 
-    function test_setContactPause_asGovernor() external {
+    function test_setContractPause_asGovernor() external {
         assertTrue(!globals.isFunctionUnpaused(CONTRACT, SIG));
 
         vm.prank(GOVERNOR);
@@ -324,7 +324,7 @@ contract SetFunctionUnpauseTests is BaseMapleGlobalsTest {
         assertTrue(!globals.isFunctionUnpaused(CONTRACT, SIG));
     }
 
-    function test_setContactPause_asSecurityAdmin() external {
+    function test_setContractPause_asSecurityAdmin() external {
         assertTrue(!globals.isFunctionUnpaused(CONTRACT, SIG));
 
         vm.prank(SECURITY_ADMIN);
@@ -1242,7 +1242,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
     function test_isFunctionPaused() external {
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(false);
-        globals.setContactPause(CONTRACT, false);
+        globals.setContractPause(CONTRACT, false);
         globals.setFunctionUnpause(CONTRACT, SIG, false);
         vm.stopPrank();
 
@@ -1251,7 +1251,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(false);
-        globals.setContactPause(CONTRACT, false);
+        globals.setContractPause(CONTRACT, false);
         globals.setFunctionUnpause(CONTRACT, SIG, true);
         vm.stopPrank();
 
@@ -1260,7 +1260,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(false);
-        globals.setContactPause(CONTRACT, true);
+        globals.setContractPause(CONTRACT, true);
         globals.setFunctionUnpause(CONTRACT, SIG, false);
         vm.stopPrank();
 
@@ -1269,7 +1269,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(false);
-        globals.setContactPause(CONTRACT, true);
+        globals.setContractPause(CONTRACT, true);
         globals.setFunctionUnpause(CONTRACT, SIG, true);
         vm.stopPrank();
 
@@ -1278,7 +1278,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(true);
-        globals.setContactPause(CONTRACT, false);
+        globals.setContractPause(CONTRACT, false);
         globals.setFunctionUnpause(CONTRACT, SIG, false);
         vm.stopPrank();
 
@@ -1287,7 +1287,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(true);
-        globals.setContactPause(CONTRACT, false);
+        globals.setContractPause(CONTRACT, false);
         globals.setFunctionUnpause(CONTRACT, SIG, true);
         vm.stopPrank();
 
@@ -1296,7 +1296,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(true);
-        globals.setContactPause(CONTRACT, true);
+        globals.setContractPause(CONTRACT, true);
         globals.setFunctionUnpause(CONTRACT, SIG, false);
         vm.stopPrank();
 
@@ -1305,7 +1305,7 @@ contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setProtocolPause(true);
-        globals.setContactPause(CONTRACT, true);
+        globals.setContractPause(CONTRACT, true);
         globals.setFunctionUnpause(CONTRACT, SIG, true);
         vm.stopPrank();
 

@@ -557,7 +557,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param contract_       The address of a contract in the protocol.
      *  @param contractPaused_ Whether the contract is uniquely paused.
      */
-    function setContactPause(address contract_, bool contractPaused_) external;
+    function setContractPause(address contract_, bool contractPaused_) external;
 
     /**
      *  @dev   Sets whether a contract's function is uniquely unpaused. A false does not imply it is paused.
