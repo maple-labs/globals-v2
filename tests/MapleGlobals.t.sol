@@ -1096,6 +1096,17 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
         globals.scheduleCall(CONTRACT, FUNCTION_ID_1, "some_calldata");
     }
 
+    function test_unscheduleCall_callDataMismatch() external {
+        ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, block.timestamp);
+        assertEq(dataHash,  keccak256(abi.encode("some_calldata")));
+
+        vm.expectRevert("MG:UC:CALLDATA_MISMATCH");
+        vm.prank(CONTRACT);
+        globals.unscheduleCall(address(this), FUNCTION_ID_1, "other_calldata");
+    }
+
     function test_unscheduleCall() external {
         ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
 
@@ -1114,6 +1125,17 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
     function test_unscheduleCall_notGovernor() external {
         vm.expectRevert("MG:NOT_GOV");
         globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "some_calldata");
+    }
+
+    function test_unscheduleCall_asGovernor_callDataMismatch() external {
+        ( uint256 timestamp, bytes32 dataHash ) = globals.scheduledCalls(address(this), CONTRACT, FUNCTION_ID_1);
+
+        assertEq(timestamp, block.timestamp);
+        assertEq(dataHash,  keccak256(abi.encode("some_calldata")));
+
+        vm.expectRevert("MG:UC:CALLDATA_MISMATCH");
+        vm.prank(GOVERNOR);
+        globals.unscheduleCall(address(this), CONTRACT, FUNCTION_ID_1, "other_calldata");
     }
 
     function test_unscheduleCall_asGovernor() external {
