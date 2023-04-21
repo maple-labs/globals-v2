@@ -40,6 +40,6 @@ interface IPoolManagerLike {
 
     function poolDelegate() external view returns (address poolDelegate_);
 
-    function setActive(bool active) external;
+    function setActive(bool active_) external;
 
 }
