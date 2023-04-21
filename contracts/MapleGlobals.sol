@@ -372,27 +372,20 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
         bytes32 dataHash_ = keccak256(abi.encode(callData_));
+
         scheduledCalls[msg.sender][contract_][functionId_] = ScheduledCall(block.timestamp, dataHash_);
+
         emit CallScheduled(msg.sender, contract_, functionId_, dataHash_, block.timestamp);
     }
 
     function unscheduleCall(address caller_, bytes32 functionId_, bytes calldata callData_) external override {
-        delete scheduledCalls[caller_][msg.sender][functionId_];
-        emit CallUnscheduled(caller_, msg.sender, functionId_, keccak256(abi.encode(callData_)), block.timestamp);
+        _unscheduleCall(caller_, msg.sender, functionId_, callData_);
     }
 
-    function unscheduleCall(
-        address          caller_,
-        address          contract_,
-        bytes32          functionId_,
-        bytes   calldata callData_
-    )
-        external override
-    {
+    function unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_) external override {
         _requireCalledByGovernor();
 
-        delete scheduledCalls[caller_][contract_][functionId_];
-        emit CallUnscheduled(caller_, contract_, functionId_, keccak256(abi.encode(callData_)), block.timestamp);
+        _unscheduleCall(caller_, contract_, functionId_, callData_);
     }
 
     function isValidScheduledCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_)
@@ -414,6 +407,16 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
             (block.timestamp >= timestamp + delay) &&
             (block.timestamp <= timestamp + delay + duration) &&
             (keccak256(abi.encode(callData_)) == scheduledCall_.dataHash);
+    }
+
+    function _unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_) internal {
+        bytes32 dataHash_ = keccak256(abi.encode(callData_));
+
+        require(dataHash_ == scheduledCalls[caller_][contract_][functionId_].dataHash, "MG:UC:CALLDATA_MISMATCH");
+
+        delete scheduledCalls[caller_][contract_][functionId_];
+
+        emit CallUnscheduled(caller_, contract_, functionId_, dataHash_, block.timestamp);
     }
 
     /**************************************************************************************************************************************/
