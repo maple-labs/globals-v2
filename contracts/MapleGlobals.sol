@@ -394,18 +394,18 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         ScheduledCall      storage scheduledCall_      = scheduledCalls[caller_][contract_][functionId_];
         TimelockParameters storage timelockParameters_ = timelockParametersOf[contract_][functionId_];
 
-        uint256 timestamp = scheduledCall_.timestamp;
-        uint128 delay     = timelockParameters_.delay;
-        uint128 duration  = timelockParameters_.duration;
+        uint256 timestamp_ = scheduledCall_.timestamp;
+        uint128 delay_     = timelockParameters_.delay;
+        uint128 duration_  = timelockParameters_.duration;
 
-        if (duration == uint128(0)) {
-            delay    = defaultTimelockParameters.delay;
-            duration = defaultTimelockParameters.duration;
+        if (duration_ == uint128(0)) {
+            delay_    = defaultTimelockParameters.delay;
+            duration_ = defaultTimelockParameters.duration;
         }
 
         isValid_ =
-            (block.timestamp >= timestamp + delay) &&
-            (block.timestamp <= timestamp + delay + duration) &&
+            (block.timestamp >= timestamp_ + delay_) &&
+            (block.timestamp <= timestamp_ + delay_ + duration_) &&
             (keccak256(abi.encode(callData_)) == scheduledCall_.dataHash);
     }
 
