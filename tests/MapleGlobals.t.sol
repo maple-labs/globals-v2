@@ -442,25 +442,25 @@ contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 /*** Allowlist Setters                                                                                                                  ***/
 /******************************************************************************************************************************************/
 
-contract SetCanDeployTests is BaseMapleGlobalsTest {
+contract SetCanDeployFromTests is BaseMapleGlobalsTest {
 
     address FACTORY = address(new Address());
 
-    function test_setCanDeploy_notGovernor() external {
+    function test_setCanDeployFrom_notGovernor() external {
         vm.expectRevert("MG:NOT_GOV");
-        globals.setCanDeploy(FACTORY, SET_ADDRESS, true);
+        globals.setCanDeployFrom(FACTORY, SET_ADDRESS, true);
     }
 
-    function test_setCanDeploy() external {
+    function test_setCanDeployFrom() external {
         assertTrue(!globals.canDeployFrom(FACTORY, SET_ADDRESS));
 
         vm.prank(GOVERNOR);
-        globals.setCanDeploy(FACTORY, SET_ADDRESS, true);
+        globals.setCanDeployFrom(FACTORY, SET_ADDRESS, true);
 
         assertTrue(globals.canDeployFrom(FACTORY, SET_ADDRESS));
 
         vm.prank(GOVERNOR);
-        globals.setCanDeploy(FACTORY, SET_ADDRESS, false);
+        globals.setCanDeployFrom(FACTORY, SET_ADDRESS, false);
 
         assertTrue(!globals.canDeployFrom(FACTORY, SET_ADDRESS));
     }
@@ -1199,7 +1199,7 @@ contract canDeployFromTests is BaseMapleGlobalsTest {
 
     function test_canDeployFrom_validFactoryAndCaller() external {
         vm.prank(GOVERNOR);
-        globals.setCanDeploy(FACTORY, CALLER, true);
+        globals.setCanDeployFrom(FACTORY, CALLER, true);
 
         bool canDeploy = globals.canDeployFrom(FACTORY, CALLER);
 
@@ -1232,7 +1232,7 @@ contract canDeployFromTests is BaseMapleGlobalsTest {
         globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(poolManagerFactory), true);
         globals.setValidInstanceOf("LOAN_MANAGER_FACTORY", LM_FACTORY,                  true);
 
-        globals.setCanDeploy(FACTORY, CALLER, true);
+        globals.setCanDeployFrom(FACTORY, CALLER, true);
         vm.stopPrank();
 
         bool canDeploy = globals.canDeployFrom(LM_FACTORY, address(poolManager));
@@ -1503,7 +1503,7 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance, true);
-        globals.setCanDeploy(instance, poolDeployer, true);
+        globals.setCanDeployFrom(instance, poolDeployer, true);
         vm.stopPrank();
 
         vm.prank(instance);
@@ -1528,7 +1528,7 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("POOL_MANAGER_FACTORY", instance, true);
-        globals.setCanDeploy(instance, caller, true);
+        globals.setCanDeployFrom(instance, caller, true);
         vm.stopPrank();
 
         vm.prank(instance);
@@ -1553,7 +1553,7 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("WITHDRAWAL_MANAGER_FACTORY", instance, true);
-        globals.setCanDeploy(instance, caller, true);
+        globals.setCanDeployFrom(instance, caller, true);
         vm.stopPrank();
 
         vm.prank(instance);
