@@ -309,7 +309,7 @@ contract SetContractPauseTests is BaseMapleGlobalsTest {
     }
 
     function test_setContractPause_notAuthorized() external {
-        vm.expectRevert("MG:NO_AUTH");
+        vm.expectRevert("MG:NOT_GOV_OR_SA");
         globals.setContractPause(CONTRACT, true);
     }
 
@@ -358,7 +358,7 @@ contract SetFunctionUnpauseTests is BaseMapleGlobalsTest {
     }
 
     function test_setContractPause_notAuthorized() external {
-        vm.expectRevert("MG:NO_AUTH");
+        vm.expectRevert("MG:NOT_GOV_OR_SA");
         globals.setFunctionUnpause(CONTRACT, SIG, true);
     }
 
@@ -404,7 +404,7 @@ contract SetProtocolPauseTests is BaseMapleGlobalsTest {
     }
 
     function test_setProtocolPause_notAuthorized() external {
-        vm.expectRevert("MG:NO_AUTH");
+        vm.expectRevert("MG:NOT_GOV_OR_SA");
         globals.setProtocolPause(true);
     }
 
@@ -578,11 +578,13 @@ contract SetValidPoolDeployer is BaseMapleGlobalsTest {
         globals.setValidPoolDeployer(SET_ADDRESS, false);
     }
 
-    function test_setValidDeployer() external {
+    function test_setValidDeployer_enablingNotAllowed() external {
         vm.expectRevert("MG:SVPD:ONLY_DISABLING");
         vm.prank(GOVERNOR);
         globals.setValidPoolDeployer(SET_ADDRESS, true);
+    }
 
+    function test_setValidDeployer_success() external {
         vm.prank(GOVERNOR);
         globals.setValidPoolDeployer(SET_ADDRESS, false);
     }
@@ -596,6 +598,12 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
 
         vm.prank(GOVERNOR);
         globals.setValidPoolDelegate(SET_ADDRESS, true);
+    }
+
+    function test_setValidDeployer_zeroAddress() external {
+        vm.expectRevert("MG:SVPD:ZERO_ADDR");
+        vm.prank(GOVERNOR);
+        globals.setValidPoolDelegate(address(0), true);
     }
 
     function test_setValidPoolDelegate() external {
