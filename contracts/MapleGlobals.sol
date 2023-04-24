@@ -135,6 +135,21 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         IPoolManagerLike(poolManager_).setActive(true);
     }
 
+    function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernor {
+        emit BootstrapMintSet(asset_, bootstrapMint[asset_] = amount_);
+    }
+
+    function setDefaultTimelockParameters(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) external override onlyGovernor {
+        emit DefaultTimelockParametersSet(
+            defaultTimelockParameters.delay,
+            defaultTimelockDelay_,
+            defaultTimelockParameters.duration,
+            defaultTimelockDuration_
+        );
+
+        defaultTimelockParameters = TimelockParameters(defaultTimelockDelay_, defaultTimelockDuration_);
+    }
+
     function setMapleTreasury(address mapleTreasury_) external override onlyGovernor {
         require(mapleTreasury_ != address(0), "MG:SMT:ZERO_ADDR");
         emit MapleTreasurySet(mapleTreasury, mapleTreasury_);
@@ -144,10 +159,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function setMigrationAdmin(address migrationAdmin_) external override onlyGovernor {
         emit MigrationAdminSet(migrationAdmin, migrationAdmin_);
         migrationAdmin = migrationAdmin_;
-    }
-
-    function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernor {
-        emit BootstrapMintSet(asset_, bootstrapMint[asset_] = amount_);
     }
 
     function setPriceOracle(address asset_, address oracle_) external override onlyGovernor {
@@ -160,17 +171,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         require(securityAdmin_ != address(0), "MG:SSA:ZERO_ADDR");
         emit SecurityAdminSet(securityAdmin, securityAdmin_);
         securityAdmin = securityAdmin_;
-    }
-
-    function setDefaultTimelockParameters(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) external override onlyGovernor {
-        emit DefaultTimelockParametersSet(
-            defaultTimelockParameters.delay,
-            defaultTimelockDelay_,
-            defaultTimelockParameters.duration,
-            defaultTimelockDuration_
-        );
-
-        defaultTimelockParameters = TimelockParameters(defaultTimelockDelay_, defaultTimelockDuration_);
     }
 
     /**************************************************************************************************************************************/
@@ -205,7 +205,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Allowlist Setters                                                                                                              ***/
     /**************************************************************************************************************************************/
 
-    function setCanDeploy(address factory_, address account_, bool canDeployFrom_) external override onlyGovernor {
+    function setCanDeployFrom(address factory_, address account_, bool canDeployFrom_) external override onlyGovernor {
         emit CanDeployFromSet(factory_, account_, _canDeployFrom[factory_][account_] = canDeployFrom_);
     }
 
@@ -259,15 +259,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Cover Setters                                                                                                                  ***/
     /**************************************************************************************************************************************/
 
-    function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override onlyGovernor {
-        minCoverAmount[poolManager_] = minCoverAmount_;
-        emit MinCoverAmountSet(poolManager_, minCoverAmount_);
-    }
-
     function setMaxCoverLiquidationPercent(address poolManager_, uint256 maxCoverLiquidationPercent_) external override onlyGovernor {
         require(maxCoverLiquidationPercent_ <= HUNDRED_PERCENT, "MG:SMCLP:GT_100");
         maxCoverLiquidationPercent[poolManager_] = maxCoverLiquidationPercent_;
         emit MaxCoverLiquidationPercentSet(poolManager_, maxCoverLiquidationPercent_);
+    }
+
+    function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override onlyGovernor {
+        minCoverAmount[poolManager_] = minCoverAmount_;
+        emit MinCoverAmountSet(poolManager_, minCoverAmount_);
     }
 
     /**************************************************************************************************************************************/
@@ -333,24 +333,6 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Schedule Functions                                                                                                             ***/
     /**************************************************************************************************************************************/
 
-    function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
-        bytes32 dataHash_ = keccak256(abi.encode(callData_));
-
-        scheduledCalls[msg.sender][contract_][functionId_] = ScheduledCall(block.timestamp, dataHash_);
-
-        emit CallScheduled(msg.sender, contract_, functionId_, dataHash_, block.timestamp);
-    }
-
-    function unscheduleCall(address caller_, bytes32 functionId_, bytes calldata callData_) external override {
-        _unscheduleCall(caller_, msg.sender, functionId_, callData_);
-    }
-
-    function unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_)
-        external override onlyGovernor
-    {
-        _unscheduleCall(caller_, contract_, functionId_, callData_);
-    }
-
     function isValidScheduledCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_)
         public override view returns (bool isValid_)
     {
@@ -370,6 +352,24 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
             (block.timestamp >= timestamp_ + delay_) &&
             (block.timestamp <= timestamp_ + delay_ + duration_) &&
             (keccak256(abi.encode(callData_)) == scheduledCall_.dataHash);
+    }
+
+    function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
+        bytes32 dataHash_ = keccak256(abi.encode(callData_));
+
+        scheduledCalls[msg.sender][contract_][functionId_] = ScheduledCall(block.timestamp, dataHash_);
+
+        emit CallScheduled(msg.sender, contract_, functionId_, dataHash_, block.timestamp);
+    }
+
+    function unscheduleCall(address caller_, bytes32 functionId_, bytes calldata callData_) external override {
+        _unscheduleCall(caller_, msg.sender, functionId_, callData_);
+    }
+
+    function unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_)
+        external override onlyGovernor
+    {
+        _unscheduleCall(caller_, contract_, functionId_, callData_);
     }
 
     function _unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_) internal {

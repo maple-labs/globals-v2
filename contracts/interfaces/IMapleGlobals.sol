@@ -10,6 +10,13 @@ interface IMapleGlobals is INonTransparentProxied {
     /**************************************************************************************************************************************/
 
     /**
+     *  @dev   A virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`.
+     *  @param asset_         The address of the pool asset.
+     *  @param bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
+     */
+    event BootstrapMintSet(address indexed asset_, uint256 bootstrapMint_);
+
+    /**
      *  @dev   A time locked call has been scheduled.
      *  @param caller_     The address of the function caller.
      *  @param contract_   The contract to execute the call on.
@@ -116,13 +123,6 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param minCoverAmount_ The new value for the minimum cover amount.
      */
     event MinCoverAmountSet(address indexed poolManager_, uint256 minCoverAmount_);
-
-    /**
-     *  @dev   A virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`.
-     *  @param asset_         The address of the pool asset.
-     *  @param bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
-     */
-    event BootstrapMintSet(address indexed asset_, uint256 bootstrapMint_);
 
     /**
      *  @dev   The pending governor has been set.
@@ -244,6 +244,13 @@ interface IMapleGlobals is INonTransparentProxied {
     /**************************************************************************************************************************************/
 
     /**
+     *  @dev    Gets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply` for a given pool asset.
+     *  @param  asset_         The address of the pool asset to query
+     *  @return bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
+     */
+    function bootstrapMint(address asset_) external view returns (uint256 bootstrapMint_);
+
+    /**
      *  @dev    Gets whether a caller account can deploy from the factory calling this function.
      *  @param  caller_    The address of the account calling the factory.
      *  @return canDeploy_ Whether the account can deploy from the factory.
@@ -264,6 +271,19 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return duration The default timelock duration.
      */
     function defaultTimelockParameters() external view returns (uint128 delay, uint128 duration);
+
+    /**
+     *  @dev    Gets the latest price for an asset.
+     *  @param  asset_       The address of the asset to query.
+     *  @return latestPrice_ The latest price for the asset.
+     */
+    function getLatestPrice(address asset_) external view returns (uint256 latestPrice_);
+
+    /**
+     *  @dev    Gets governor address.
+     *  @return governor_ The address of the governor.
+     */
+    function governor() external view returns (address governor_);
 
     /**
      *  @dev    Gets the validity of a borrower.
@@ -347,19 +367,6 @@ interface IMapleGlobals is INonTransparentProxied {
     function isPoolDeployer(address account_) external view returns (bool isPoolDeployer_);
 
     /**
-     *  @dev    Gets the latest price for an asset.
-     *  @param  asset_       The address of the asset to query.
-     *  @return latestPrice_ The latest price for the asset.
-     */
-    function getLatestPrice(address asset_) external view returns (uint256 latestPrice_);
-
-    /**
-     *  @dev    Gets governor address.
-     *  @return governor_ The address of the governor.
-     */
-    function governor() external view returns (address governor_);
-
-    /**
      *  @dev    Gets the manual override price for an asset.
      *  @param  asset_               The address of the asset to query.
      *  @return manualOverridePrice_ The manual override price for the asset.
@@ -391,13 +398,6 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return minCoverAmount_ The minimum cover amount.
      */
     function minCoverAmount(address poolManager_) external view returns (uint256 minCoverAmount_);
-
-    /**
-     *  @dev    Gets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply` for a given pool asset.
-     *  @param  asset_         The address of the pool asset to query
-     *  @return bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
-     */
-    function bootstrapMint(address asset_) external view returns (uint256 bootstrapMint_);
 
     /**
      *  @dev    Gets the address of the oracle for the given asset.
@@ -509,6 +509,21 @@ interface IMapleGlobals is INonTransparentProxied {
     function activatePoolManager(address poolManager_) external;
 
     /**
+     *  @dev   Sets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`
+     *         to prevent an MEV-exploit vector against the first pool depositor.
+     *  @param asset_         The address of the pool asset.
+     *  @param bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
+     */
+    function setBootstrapMint(address asset_, uint256 bootstrapMint_) external;
+
+    /**
+     *  @dev   Sets the default time lock parameters.
+     *  @param defaultTimelockDelay_    The default time lock delay.
+     *  @param defaultTimelockDuration_ The default time lock duration.
+     */
+    function setDefaultTimelockParameters(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) external;
+
+    /**
      *  @dev   Sets the address of the Maple treasury.
      *  @param mapleTreasury_ The address of the Maple treasury.
      */
@@ -519,14 +534,6 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param migrationAdmin_ The address of the migration admin.
      */
     function setMigrationAdmin(address migrationAdmin_) external;
-
-    /**
-     *  @dev   Sets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`
-     *         to prevent an MEV-exploit vector against the first pool depositor.
-     *  @param asset_         The address of the pool asset.
-     *  @param bootstrapMint_ The amount of shares that will offset `totalAssets` and `totalSupply`.
-     */
-    function setBootstrapMint(address asset_, uint256 bootstrapMint_) external;
 
     /**
      *  @dev   Sets the price oracle for the given asset.
@@ -540,13 +547,6 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param securityAdmin_ The address of the security admin.
      */
     function setSecurityAdmin(address securityAdmin_) external;
-
-    /**
-     *  @dev   Sets the default time lock parameters.
-     *  @param defaultTimelockDelay_    The default time lock delay.
-     *  @param defaultTimelockDuration_ The default time lock duration.
-     */
-    function setDefaultTimelockParameters(uint128 defaultTimelockDelay_, uint128 defaultTimelockDuration_) external;
 
     /**************************************************************************************************************************************/
     /*** Boolean Setters                                                                                                                ***/
@@ -583,7 +583,7 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param account_       The address of the account.
      *  @param canDeployFrom_ Whether the account can deploy or not from the factory.
      */
-    function setCanDeploy(address factory_, address account_, bool canDeployFrom_) external;
+    function setCanDeployFrom(address factory_, address account_, bool canDeployFrom_) external;
 
     /**
      *  @dev   Sets the validity of the borrower.
@@ -721,6 +721,21 @@ interface IMapleGlobals is INonTransparentProxied {
     /**************************************************************************************************************************************/
 
     /**
+     *  @dev    Checks if a call is scheduled.
+     *  @param  caller_     The contract to execute the call on.
+     *  @param  contract_   The contract to execute the call on.
+     *  @param  functionId_ The id of the function to execute.
+     *  @param  callData_   The of the parameters to pass to the function.
+     *  @return isValid_    True if the call is scheduled, false otherwise.
+     */
+    function isValidScheduledCall(
+        address          caller_,
+        address          contract_,
+        bytes32          functionId_,
+        bytes   calldata callData_
+    ) external view returns (bool isValid_);
+
+    /**
      *  @dev   Schedules a call to be executed.
      *  @param contract_   The contract to execute the call on.
      *  @param functionId_ The id of the function to execute.
@@ -744,20 +759,5 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param callData_   The of the parameters to pass to the function.
      */
     function unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_) external;
-
-    /**
-     *  @dev    Checks if a call is scheduled.
-     *  @param  caller_     The contract to execute the call on.
-     *  @param  contract_   The contract to execute the call on.
-     *  @param  functionId_ The id of the function to execute.
-     *  @param  callData_   The of the parameters to pass to the function.
-     *  @return isValid_    True if the call is scheduled, false otherwise.
-     */
-    function isValidScheduledCall(
-        address          caller_,
-        address          contract_,
-        bytes32          functionId_,
-        bytes   calldata callData_
-    ) external view returns (bool isValid_);
 
 }
