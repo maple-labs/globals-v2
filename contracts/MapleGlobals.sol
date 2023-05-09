@@ -309,9 +309,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     )
         public override onlyGovernor
     {
-        for (uint256 i_; i_ < functionIds_.length;) {
+        for (uint256 i_; i_ < functionIds_.length; ++i_) {
             _setTimelockWindow(contract_, functionIds_[i_], delays_[i_], durations_[i_]);
-            unchecked { ++i_; }
         }
     }
 
