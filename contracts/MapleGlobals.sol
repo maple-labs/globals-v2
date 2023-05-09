@@ -425,7 +425,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     // NOTE: This function is deprecated.
     // NOTE: This is only used by the LiquidatorFactory to determine if the factory of it's caller is a FixedTermLoanManagerFactory.
-    // NOTE: Original liquidatorFactory checks isFactory("LOAN_MANAGER", address(this));
+    // NOTE: Original liquidatorFactory checks isFactory("LOAN_MANAGER", IMapleProxied(msg.sender).factory());
     function isFactory(bytes32 factoryId_, address factory_) external view override returns (bool isFactory_) {
         // NOTE: Key is not used as this function is deprecated and narrowed.
         factoryId_;
