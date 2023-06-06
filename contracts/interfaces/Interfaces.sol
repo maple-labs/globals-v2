@@ -24,8 +24,22 @@ interface IPoolLike {
 
 interface IPoolManagerLike {
 
+    function factory() external view returns (address factory_);
+
     function poolDelegate() external view returns (address poolDelegate_);
 
-    function setActive(bool active) external;
+    function setActive(bool active_) external;
+
+}
+
+interface IProxyLike {
+
+    function factory() external view returns (address factory_);
+
+}
+
+interface IProxyFactoryLike {
+
+    function isInstance(address instance_) external view returns (bool isInstance_);
 
 }
