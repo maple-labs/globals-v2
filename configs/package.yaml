@@ -4,4 +4,4 @@ source: contracts
 packages:
   - path: contracts/MapleGlobals.sol
     contractName: MapleGlobals
-customDescription: Maple Globals V2 Artifacts and ABIs
+customDescription: Maple Globals Artifacts and ABIs
