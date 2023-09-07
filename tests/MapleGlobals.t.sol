@@ -641,7 +641,7 @@ contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
     function test_setManualOverridePrice() external {
         MockChainlinkOracle oracle = new MockChainlinkOracle();
 
-        oracle.__setUpdatedAt(1);
+        oracle.__setUpdatedAt(block.timestamp);
         oracle.__setRoundId(1);
         oracle.__setAnsweredInRound(1);
         oracle.__setPrice(100);
@@ -1272,8 +1272,24 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
         globals.getLatestPrice(ASSET);
     }
 
+    function test_getLatestPrice_stalePrice() external {
+        uint256 MAX_DELAY = 86400 seconds;
+
+        oracle.__setUpdatedAt(block.timestamp - MAX_DELAY - 1);  // `updatedAt_` >1 day ago.
+
+        vm.expectRevert("MG:GLP:STALE_PRICE");
+        globals.getLatestPrice(ASSET);
+
+        oracle.__setUpdatedAt(block.timestamp - MAX_DELAY);  // `updatedAt_` <=1 day.
+        oracle.__setRoundId(1);
+        oracle.__setAnsweredInRound(1);
+        oracle.__setPrice(100);
+
+        assertEq(globals.getLatestPrice(ASSET), 100);
+    }
+
     function test_getLatestPrice_staleData() external {
-        oracle.__setUpdatedAt(1);
+        oracle.__setUpdatedAt(block.timestamp);
         oracle.__setRoundId(1);  // `answeredInRound_` is 0.
 
         vm.expectRevert("MG:GLP:STALE_DATA");
@@ -1281,7 +1297,7 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
     }
 
     function test_getLatestPrice_zeroPrice() external {
-        oracle.__setUpdatedAt(1);
+        oracle.__setUpdatedAt(block.timestamp);
         oracle.__setRoundId(1);
         oracle.__setAnsweredInRound(1);
 
@@ -1290,7 +1306,7 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
     }
 
     function test_getLatestPrice() external {
-        oracle.__setUpdatedAt(1);
+        oracle.__setUpdatedAt(block.timestamp);
         oracle.__setRoundId(1);
         oracle.__setAnsweredInRound(1);
 
@@ -1304,7 +1320,7 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
     }
 
     function test_getLatestPrice_manualOverride() external {
-        oracle.__setUpdatedAt(1);
+        oracle.__setUpdatedAt(block.timestamp);
         oracle.__setRoundId(1);
         oracle.__setAnsweredInRound(1);
 

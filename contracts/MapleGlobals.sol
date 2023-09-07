@@ -44,6 +44,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************************************************************************************************************************/
 
     uint256 public constant HUNDRED_PERCENT = 100_0000;
+    uint256 public constant MAX_DELAY       = 86400 seconds;
 
     address public override mapleTreasury;
     address public override migrationAdmin;
@@ -411,9 +412,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
             uint80 answeredInRound_
         ) = IChainlinkAggregatorV3Like(oracle_).latestRoundData();
 
-        require(updatedAt_ != 0,              "MG:GLP:ROUND_NOT_COMPLETE");
-        require(answeredInRound_ >= roundId_, "MG:GLP:STALE_DATA");
-        require(price_ > int256(0),           "MG:GLP:ZERO_PRICE");
+        require(updatedAt_ != 0,                             "MG:GLP:ROUND_NOT_COMPLETE");
+        require(updatedAt_ >= (block.timestamp - MAX_DELAY), "MG:GLP:STALE_PRICE");
+        require(answeredInRound_ >= roundId_,                "MG:GLP:STALE_DATA");
+        require(price_ > int256(0),                          "MG:GLP:ZERO_PRICE");
 
         latestPrice_ = uint256(price_);
     }
