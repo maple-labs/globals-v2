@@ -18,6 +18,8 @@ contract BaseMapleGlobalsTest is TestUtils {
     address internal GOVERNOR    = address(new Address());
     address internal SET_ADDRESS = address(new Address());
 
+    uint96 internal MAX_DELAY = 86400 seconds;
+
     address internal implementation;
 
     MapleGlobals internal globals;
@@ -204,29 +206,40 @@ contract SetPriceOracleTests is BaseMapleGlobalsTest {
 
     function test_setPriceOracle_notGovernor() external {
         vm.expectRevert("MG:NOT_GOV");
-        globals.setPriceOracle(ASSET, SET_ADDRESS);
+        globals.setPriceOracle(ASSET, SET_ADDRESS, MAX_DELAY);
     }
 
     function test_setPriceOracle_zeroAddressCheck() external {
         vm.startPrank(GOVERNOR);
 
         vm.expectRevert("MG:SPO:ZERO_ADDR");
-        globals.setPriceOracle(ASSET, address(0));
+        globals.setPriceOracle(ASSET, address(0), MAX_DELAY);
 
         vm.expectRevert("MG:SPO:ZERO_ADDR");
-        globals.setPriceOracle(address(0), SET_ADDRESS);
+        globals.setPriceOracle(address(0), SET_ADDRESS, MAX_DELAY);
 
         vm.expectRevert("MG:SPO:ZERO_ADDR");
-        globals.setPriceOracle(address(0), address(0));
+        globals.setPriceOracle(address(0), address(0), MAX_DELAY);
+    }
+
+    function test_setPriceOracle_zeroTimeCheck() external {
+        vm.prank(GOVERNOR);
+
+        vm.expectRevert("MG:SPO:ZERO_TIME");
+        globals.setPriceOracle(ASSET, SET_ADDRESS, 0);
     }
 
     function test_setPriceOracle() external {
-        assertEq(globals.oracleFor(ASSET), address(0));
+        ( address oracle_, ) = globals.priceOracleOf(ASSET);
+
+        assertEq(oracle_, address(0));
 
         vm.prank(GOVERNOR);
-        globals.setPriceOracle(ASSET, SET_ADDRESS);
+        globals.setPriceOracle(ASSET, SET_ADDRESS, MAX_DELAY);
 
-        assertEq(globals.oracleFor(ASSET), SET_ADDRESS);
+        ( oracle_, ) = globals.priceOracleOf(ASSET);
+        
+        assertEq(oracle_, SET_ADDRESS);
     }
 
 }
@@ -642,12 +655,10 @@ contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
         MockChainlinkOracle oracle = new MockChainlinkOracle();
 
         oracle.__setUpdatedAt(block.timestamp);
-        oracle.__setRoundId(1);
-        oracle.__setAnsweredInRound(1);
         oracle.__setPrice(100);
 
         vm.prank(GOVERNOR);
-        globals.setPriceOracle(ASSET, address(oracle));
+        globals.setPriceOracle(ASSET, address(oracle), MAX_DELAY);
 
         assertEq(globals.getLatestPrice(ASSET), 100);
 
@@ -1257,7 +1268,7 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
         super.setUp();
 
         vm.prank(GOVERNOR);
-        globals.setPriceOracle(ASSET, address(oracle));
+        globals.setPriceOracle(ASSET, address(oracle), MAX_DELAY);
     }
 
     function test_getLatestPrice_oracleNotSet() external {
@@ -1273,33 +1284,19 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
     }
 
     function test_getLatestPrice_stalePrice() external {
-        uint256 MAX_DELAY = 86400 seconds;
-
         oracle.__setUpdatedAt(block.timestamp - MAX_DELAY - 1);  // `updatedAt_` >1 day ago.
 
         vm.expectRevert("MG:GLP:STALE_PRICE");
         globals.getLatestPrice(ASSET);
 
         oracle.__setUpdatedAt(block.timestamp - MAX_DELAY);  // `updatedAt_` <=1 day.
-        oracle.__setRoundId(1);
-        oracle.__setAnsweredInRound(1);
         oracle.__setPrice(100);
 
         assertEq(globals.getLatestPrice(ASSET), 100);
     }
 
-    function test_getLatestPrice_staleData() external {
-        oracle.__setUpdatedAt(block.timestamp);
-        oracle.__setRoundId(1);  // `answeredInRound_` is 0.
-
-        vm.expectRevert("MG:GLP:STALE_DATA");
-        globals.getLatestPrice(ASSET);
-    }
-
     function test_getLatestPrice_zeroPrice() external {
         oracle.__setUpdatedAt(block.timestamp);
-        oracle.__setRoundId(1);
-        oracle.__setAnsweredInRound(1);
 
         vm.expectRevert("MG:GLP:ZERO_PRICE");
         globals.getLatestPrice(ASSET);
@@ -1307,8 +1304,6 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
 
     function test_getLatestPrice() external {
         oracle.__setUpdatedAt(block.timestamp);
-        oracle.__setRoundId(1);
-        oracle.__setAnsweredInRound(1);
 
         oracle.__setPrice(100);
 
@@ -1321,8 +1316,6 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
 
     function test_getLatestPrice_manualOverride() external {
         oracle.__setUpdatedAt(block.timestamp);
-        oracle.__setRoundId(1);
-        oracle.__setAnsweredInRound(1);
 
         oracle.__setPrice(100);
 

@@ -168,10 +168,11 @@ interface IMapleGlobals is INonTransparentProxied {
 
     /**
      *  @dev   The oracle for an asset has been set.
-     *  @param asset_  The address of the asset.
-     *  @param oracle_ The address of the oracle.
+     *  @param asset_    The address of the asset.
+     *  @param oracle_   The address of the oracle.
+     *  @param maxDelay_ The maximum delay of the oracle.
      */
-    event PriceOracleSet(address indexed asset_, address indexed oracle_);
+    event PriceOracleSet(address indexed asset_, address indexed oracle_, uint96 maxDelay_);
 
     /**
      *  @dev   The protocol pause was set to a new state.
@@ -400,11 +401,12 @@ interface IMapleGlobals is INonTransparentProxied {
     function minCoverAmount(address poolManager_) external view returns (uint256 minCoverAmount_);
 
     /**
-     *  @dev    Gets the address of the oracle for the given asset.
-     *  @param  asset_  The address of the asset to query.
-     *  @return oracle_ The address of the oracle.
+     *  @dev    Gets the address and maximum delay of the oracle for the given asset.
+     *  @param  asset_   The address of the asset to query.
+     *  @return oracle   The address of the oracle.
+     *  @return maxDelay The maximum delay of the oracle.
      */
-    function oracleFor(address asset_) external view returns (address oracle_);
+    function priceOracleOf(address asset_) external view returns (address oracle, uint96 maxDelay);
 
     /**
      *  @dev    Gets the address of the owner pool manager.
@@ -537,10 +539,11 @@ interface IMapleGlobals is INonTransparentProxied {
 
     /**
      *  @dev   Sets the price oracle for the given asset.
-     *  @param asset_       The address of the asset to set the oracle for.
-     *  @param priceOracle_ The address of the oracle to set for the asset.
+     *  @param asset_    The address of the asset to set the oracle for.
+     *  @param oracle_   The address of the oracle to set for the asset.
+     *  @param maxDelay_ Maximum delay set to check for stale price.
      */
-    function setPriceOracle(address asset_, address priceOracle_) external;
+    function setPriceOracle(address asset_, address oracle_, uint96 maxDelay_) external;
 
     /**
      *  @dev   Sets the address of the security admin.

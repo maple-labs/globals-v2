@@ -39,12 +39,16 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         uint128 duration;
     }
 
+    struct PriceOracle {
+        address oracle;
+        uint96  maxDelay;
+    }
+
     /**************************************************************************************************************************************/
     /*** Storage                                                                                                                        ***/
     /**************************************************************************************************************************************/
 
     uint256 public constant HUNDRED_PERCENT = 100_0000;
-    uint256 public constant MAX_DELAY       = 86400 seconds;
 
     address public override mapleTreasury;
     address public override migrationAdmin;
@@ -55,7 +59,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     TimelockParameters public override defaultTimelockParameters;
 
-    mapping(address => address) public override oracleFor;
+    mapping(address => PriceOracle) public override priceOracleOf;
 
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isCollateralAsset;
@@ -162,10 +166,14 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         migrationAdmin = migrationAdmin_;
     }
 
-    function setPriceOracle(address asset_, address oracle_) external override onlyGovernor {
+    function setPriceOracle(address asset_, address oracle_, uint96 maxDelay_) external override onlyGovernor {
         require(oracle_ != address(0) && asset_ != address(0), "MG:SPO:ZERO_ADDR");
-        oracleFor[asset_] = oracle_;
-        emit PriceOracleSet(asset_, oracle_);
+        require(maxDelay_ > 0,                                 "MG:SPO:ZERO_TIME");
+
+        priceOracleOf[asset_].oracle   = oracle_;
+        priceOracleOf[asset_].maxDelay = maxDelay_;
+        
+        emit PriceOracleSet(asset_, oracle_, maxDelay_);
     }
 
     function setSecurityAdmin(address securityAdmin_) external override onlyGovernor {
@@ -400,22 +408,20 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         // If governor has overridden price because of oracle outage, return overridden price.
         if (manualOverridePrice[asset_] != 0) return manualOverridePrice[asset_];
 
-        address oracle_ = oracleFor[asset_];
+        address oracle_ = priceOracleOf[asset_].oracle;
 
         require(oracle_ != address(0), "MG:GLP:ZERO_ORACLE");
 
         (
-            uint80 roundId_,
+            ,
             int256 price_,
             ,
             uint256 updatedAt_,
-            uint80 answeredInRound_
         ) = IChainlinkAggregatorV3Like(oracle_).latestRoundData();
 
-        require(updatedAt_ != 0,                             "MG:GLP:ROUND_NOT_COMPLETE");
-        require(updatedAt_ >= (block.timestamp - MAX_DELAY), "MG:GLP:STALE_PRICE");
-        require(answeredInRound_ >= roundId_,                "MG:GLP:STALE_DATA");
-        require(price_ > int256(0),                          "MG:GLP:ZERO_PRICE");
+        require(updatedAt_ != 0,                                                  "MG:GLP:ROUND_NOT_COMPLETE");
+        require(updatedAt_ >= (block.timestamp - priceOracleOf[asset_].maxDelay), "MG:GLP:STALE_PRICE");
+        require(price_ > int256(0),                                               "MG:GLP:ZERO_PRICE");
 
         latestPrice_ = uint256(price_);
     }
