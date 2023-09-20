@@ -238,7 +238,7 @@ contract SetPriceOracleTests is BaseMapleGlobalsTest {
         globals.setPriceOracle(ASSET, SET_ADDRESS, MAX_DELAY);
 
         ( oracle_, ) = globals.priceOracleOf(ASSET);
-        
+
         assertEq(oracle_, SET_ADDRESS);
     }
 
@@ -1184,7 +1184,9 @@ contract canDeployFromTests is BaseMapleGlobalsTest {
     address internal CALLER        = address(new Address());
     address internal FACTORY       = address(new Address());
     address internal LM_FACTORY    = address(new Address());
+    address internal LOAN_FACTORY  = address(new Address());
     address internal POOL_DELEGATE = address(new Address());
+    address internal BORROWER      = address(new Address());
 
     MockPoolManager  internal poolManager        = new MockPoolManager(POOL_DELEGATE);
     MockProxyFactory internal poolManagerFactory = new MockProxyFactory();
@@ -1252,6 +1254,55 @@ contract canDeployFromTests is BaseMapleGlobalsTest {
 
         vm.prank(LM_FACTORY);
         canDeploy = globals.canDeploy(address(poolManager));
+
+        assertTrue(canDeploy);
+    }
+
+    function test_canDeployFrom_validBorrowerDeploying_invalidFactoryInstance() external {
+        vm.prank(GOVERNOR);
+        globals.setValidBorrower(BORROWER, true);
+
+        bool canDeploy = globals.canDeployFrom(LOAN_FACTORY, BORROWER);
+
+        assertTrue(!canDeploy);
+
+        vm.prank(LOAN_FACTORY);
+        canDeploy = globals.canDeploy(BORROWER);
+
+        assertTrue(!canDeploy);
+    }
+
+    function test_canDeployFrom_validBorrowerDeploying_validFactoryInstanceSet() external {
+        vm.startPrank(GOVERNOR);
+        globals.setValidBorrower(BORROWER, true);
+        globals.setValidInstanceOf("LOAN_FACTORY", LOAN_FACTORY, true);
+        vm.stopPrank();
+
+        bool canDeploy = globals.canDeployFrom(LOAN_FACTORY, BORROWER);
+
+        assertTrue(canDeploy);
+
+        vm.prank(LOAN_FACTORY);
+        canDeploy = globals.canDeploy(BORROWER);
+
+        assertTrue(canDeploy);
+    }
+
+    function test_canDeployFrom_validBorrowerDeploying_withoutFactoryAndCallerSet() external {
+        vm.startPrank(GOVERNOR);
+        // To explicitly show borrowers can deploy without setting canDeployFrom
+        globals.setCanDeployFrom(LOAN_FACTORY, BORROWER, false);
+
+        globals.setValidBorrower(BORROWER, true);
+        globals.setValidInstanceOf("LOAN_FACTORY", LOAN_FACTORY, true);
+        vm.stopPrank();
+
+        bool canDeploy = globals.canDeployFrom(LOAN_FACTORY, BORROWER);
+
+        assertTrue(canDeploy);
+
+        vm.prank(LOAN_FACTORY);
+        canDeploy = globals.canDeploy(BORROWER);
 
         assertTrue(canDeploy);
     }
