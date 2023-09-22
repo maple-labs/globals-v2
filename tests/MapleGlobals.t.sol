@@ -15,8 +15,9 @@ import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/
 
 contract BaseMapleGlobalsTest is TestUtils {
 
-    address internal GOVERNOR    = address(new Address());
-    address internal SET_ADDRESS = address(new Address());
+    address internal GOVERNOR          = address(new Address());
+    address internal OPERATIONAL_ADMIN = address(new Address());
+    address internal SET_ADDRESS       = address(new Address());
 
     uint96 internal MAX_DELAY = 86400 seconds;
 
@@ -72,7 +73,7 @@ contract TransferGovernorTests is BaseMapleGlobalsTest {
 /*** Global Setters                                                                                                                     ***/
 /******************************************************************************************************************************************/
 
-contract ActivatePoolTests is BaseMapleGlobalsTest {
+contract ActivatePoolManagerTests is BaseMapleGlobalsTest {
 
     address internal admin = address(new Address());
 
@@ -83,6 +84,7 @@ contract ActivatePoolTests is BaseMapleGlobalsTest {
         super.setUp();
 
         vm.startPrank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
         globals.setValidInstanceOf("POOL_MANAGER_FACTORY", address(factory), true);
         globals.setValidPoolDelegate(admin, true);
         vm.stopPrank();
@@ -91,8 +93,8 @@ contract ActivatePoolTests is BaseMapleGlobalsTest {
         manager.__setFactory(address(factory));
     }
 
-    function test_activatePoolManager_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_activatePoolManager_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.activatePoolManager(address(manager));
 
         vm.prank(GOVERNOR);
@@ -147,10 +149,19 @@ contract ActivatePoolTests is BaseMapleGlobalsTest {
         globals.activatePoolManager(address(manager));
     }
 
-    function test_activatePoolManager_success() external {
+    function test_activatePoolManager_success_governor() external {
         assertEq(globals.ownedPoolManager(admin), address(0));
 
         vm.prank(GOVERNOR);
+        globals.activatePoolManager(address(manager));
+
+        assertEq(globals.ownedPoolManager(admin), address(manager));
+    }
+
+    function test_activatePoolManager_success_operationalAdmin() external {
+        assertEq(globals.ownedPoolManager(admin), address(0));
+
+        vm.prank(OPERATIONAL_ADMIN);
         globals.activatePoolManager(address(manager));
 
         assertEq(globals.ownedPoolManager(admin), address(manager));
@@ -196,6 +207,24 @@ contract SetMigrationAdminTests is BaseMapleGlobalsTest {
         globals.setMigrationAdmin(SET_ADDRESS);
 
         assertEq(globals.migrationAdmin(), SET_ADDRESS);
+    }
+
+}
+
+contract SetOperationalAdminTests is BaseMapleGlobalsTest {
+
+    function test_setOperationalAdmin_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOV");
+        globals.setOperationalAdmin(SET_ADDRESS);
+    }
+
+    function test_setOperationalAdmin() external {
+        assertEq(globals.operationalAdmin(), address(0));
+
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(SET_ADDRESS);
+
+        assertEq(globals.operationalAdmin(), SET_ADDRESS);
     }
 
 }
@@ -459,12 +488,12 @@ contract SetCanDeployFromTests is BaseMapleGlobalsTest {
 
     address FACTORY = address(new Address());
 
-    function test_setCanDeployFrom_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setCanDeployFrom_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setCanDeployFrom(FACTORY, SET_ADDRESS, true);
     }
 
-    function test_setCanDeployFrom() external {
+    function test_setCanDeployFrom_success_governor() external {
         assertTrue(!globals.canDeployFrom(FACTORY, SET_ADDRESS));
 
         vm.prank(GOVERNOR);
@@ -478,19 +507,32 @@ contract SetCanDeployFromTests is BaseMapleGlobalsTest {
         assertTrue(!globals.canDeployFrom(FACTORY, SET_ADDRESS));
     }
 
+    function test_setCanDeployFrom_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        assertTrue(!globals.canDeployFrom(FACTORY, SET_ADDRESS));
+
+        vm.prank(OPERATIONAL_ADMIN);
+        globals.setCanDeployFrom(FACTORY, SET_ADDRESS, true);
+
+        assertTrue(globals.canDeployFrom(FACTORY, SET_ADDRESS));
+
+    }
+
 }
 
 contract SetValidBorrowerTests is BaseMapleGlobalsTest {
 
-    function test_setValidBorrower_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setValidBorrower_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setValidBorrower(SET_ADDRESS, true);
 
         vm.prank(GOVERNOR);
         globals.setValidBorrower(SET_ADDRESS, true);
     }
 
-    function test_setValidBorrower() external {
+    function test_setValidBorrower_success_governor() external {
         vm.startPrank(GOVERNOR);
 
         assertTrue(!globals.isBorrower(SET_ADDRESS));
@@ -502,6 +544,18 @@ contract SetValidBorrowerTests is BaseMapleGlobalsTest {
         globals.setValidBorrower(SET_ADDRESS, false);
 
         assertTrue(!globals.isBorrower(SET_ADDRESS));
+    }
+
+    function test_setValidBorrower_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        assertTrue(!globals.isBorrower(SET_ADDRESS));
+
+        vm.prank(OPERATIONAL_ADMIN);
+        globals.setValidBorrower(SET_ADDRESS, true);
+
+        assertTrue(globals.isBorrower(SET_ADDRESS));
     }
 
 }
@@ -534,15 +588,15 @@ contract SetValidCollateralTests is BaseMapleGlobalsTest {
 
 contract SetValidInstanceOfTests is BaseMapleGlobalsTest {
 
-    function test_setValidInstanceOf_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setValidInstanceOf_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, true);
 
         vm.prank(GOVERNOR);
         globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, true);
     }
 
-    function test_setValidInstanceOf() external {
+    function test_setValidInstanceOf_success_governor() external {
         vm.startPrank(GOVERNOR);
 
         assertTrue(!globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
@@ -554,6 +608,19 @@ contract SetValidInstanceOfTests is BaseMapleGlobalsTest {
         globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, false);
 
         assertTrue(!globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
+    }
+
+    function test_setValidInstanceOf_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        assertTrue(!globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
+
+        vm.prank(OPERATIONAL_ADMIN);
+        globals.setValidInstanceOf("TEST_INSTANCE", SET_ADDRESS, true);
+
+        assertTrue(globals.isInstanceOf("TEST_INSTANCE", SET_ADDRESS));
+
     }
 
 }
@@ -605,8 +672,8 @@ contract SetValidPoolDeployer is BaseMapleGlobalsTest {
 
 contract SetValidPoolDelegate is BaseMapleGlobalsTest {
 
-    function test_setValidPoolDelegate_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setValidPoolDelegate_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setValidPoolDelegate(SET_ADDRESS, true);
 
         vm.prank(GOVERNOR);
@@ -619,7 +686,7 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
         globals.setValidPoolDelegate(address(0), true);
     }
 
-    function test_setValidPoolDelegate() external {
+    function test_setValidPoolDelegate_success_governor() external {
         vm.startPrank(GOVERNOR);
 
         assertTrue(!globals.isPoolDelegate(SET_ADDRESS));
@@ -631,6 +698,18 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
         globals.setValidPoolDelegate(SET_ADDRESS, false);
 
         assertTrue(!globals.isPoolDelegate(SET_ADDRESS));
+    }
+
+    function test_setValidPoolDelegate_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        assertTrue(!globals.isPoolDelegate(SET_ADDRESS));
+
+        vm.prank(OPERATIONAL_ADMIN);
+        globals.setValidPoolDelegate(SET_ADDRESS, true);
+
+        assertTrue(globals.isPoolDelegate(SET_ADDRESS));
     }
 
 }
@@ -676,8 +755,8 @@ contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
 
 contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
 
-    function test_setMaxCoverLiquidationPercent_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setMaxCoverLiquidationPercent_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 50_00);
 
         vm.prank(GOVERNOR);
@@ -693,11 +772,22 @@ contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
         globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 100_0000);
     }
 
-    function test_setMaxCoverLiquidationPercent() external {
-        vm.startPrank(GOVERNOR);
+    function test_setMaxCoverLiquidationPercent_success_governor() external {
+        assertEq(globals.maxCoverLiquidationPercent(SET_ADDRESS), 0);
+
+        vm.prank(GOVERNOR);
+        globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 50_00);
+
+        assertEq(globals.maxCoverLiquidationPercent(SET_ADDRESS), 50_00);
+    }
+
+    function test_setMaxCoverLiquidationPercent_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
 
         assertEq(globals.maxCoverLiquidationPercent(SET_ADDRESS), 0);
 
+        vm.prank(OPERATIONAL_ADMIN);
         globals.setMaxCoverLiquidationPercent(SET_ADDRESS, 50_00);
 
         assertEq(globals.maxCoverLiquidationPercent(SET_ADDRESS), 50_00);
@@ -707,19 +797,30 @@ contract SetMaxCoverLiquidationPercentTests is BaseMapleGlobalsTest {
 
 contract SetMinCoverAmountTests is BaseMapleGlobalsTest {
 
-    function test_setMinCoverAmount_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setMinCoverAmount_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setMinCoverAmount(SET_ADDRESS, 1_000e6);
 
         vm.prank(GOVERNOR);
         globals.setMinCoverAmount(SET_ADDRESS, 1_000e6);
     }
 
-    function test_setMinCoverAmount() external {
-        vm.startPrank(GOVERNOR);
+    function test_setMinCoverAmount_success_governor() external {
+        assertEq(globals.minCoverAmount(SET_ADDRESS), 0);
+
+        vm.prank(GOVERNOR);
+        globals.setMinCoverAmount(SET_ADDRESS, 1_000e6);
+
+        assertEq(globals.minCoverAmount(SET_ADDRESS), 1_000e6);
+    }
+
+    function test_setMinCoverAmount_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
 
         assertEq(globals.minCoverAmount(SET_ADDRESS), 0);
 
+        vm.prank(OPERATIONAL_ADMIN);
         globals.setMinCoverAmount(SET_ADDRESS, 1_000e6);
 
         assertEq(globals.minCoverAmount(SET_ADDRESS), 1_000e6);
@@ -729,19 +830,30 @@ contract SetMinCoverAmountTests is BaseMapleGlobalsTest {
 
 contract SetBootstrapMintTests is BaseMapleGlobalsTest {
 
-    function test_setBootstrapMint_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setBootstrapMint_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setBootstrapMint(SET_ADDRESS, 1_000e6);
 
         vm.prank(GOVERNOR);
         globals.setBootstrapMint(SET_ADDRESS, 1_000e6);
     }
 
-    function test_setBootstrapMint() external {
-        vm.startPrank(GOVERNOR);
+    function test_setBootstrapMint_success_governor() external {
+        assertEq(globals.bootstrapMint(SET_ADDRESS), 0);
+
+        vm.prank(GOVERNOR);
+        globals.setBootstrapMint(SET_ADDRESS, 1_000e6);
+
+        assertEq(globals.bootstrapMint(SET_ADDRESS), 1_000e6);
+    }
+
+    function test_setBootstrapMint_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
 
         assertEq(globals.bootstrapMint(SET_ADDRESS), 0);
 
+        vm.prank(OPERATIONAL_ADMIN);
         globals.setBootstrapMint(SET_ADDRESS, 1_000e6);
 
         assertEq(globals.bootstrapMint(SET_ADDRESS), 1_000e6);
@@ -757,8 +869,8 @@ contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
     address internal PM_ADDRESS = address(new Address());
 
-    function test_setPlatformManagementFeeRate_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setPlatformManagementFeeRate_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setPlatformManagementFeeRate(PM_ADDRESS, 20_0000);
 
         vm.prank(GOVERNOR);
@@ -774,10 +886,22 @@ contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
         globals.setPlatformManagementFeeRate(PM_ADDRESS, 100_0000);
     }
 
-    function test_setPlatformManagementFeeRate() external {
+    function test_setPlatformManagementFeeRate_success_governor() external {
         assertEq(globals.platformManagementFeeRate(PM_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
+        globals.setPlatformManagementFeeRate(PM_ADDRESS, 20_0000);
+
+        assertEq(globals.platformManagementFeeRate(PM_ADDRESS), 20_0000);
+    }
+
+    function test_setPlatformManagementFeeRate_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        assertEq(globals.platformManagementFeeRate(PM_ADDRESS), 0);
+
+        vm.prank(OPERATIONAL_ADMIN);
         globals.setPlatformManagementFeeRate(PM_ADDRESS, 20_0000);
 
         assertEq(globals.platformManagementFeeRate(PM_ADDRESS), 20_0000);
@@ -789,8 +913,8 @@ contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
 
     address internal PM_ADDRESS = address(new Address());
 
-    function test_setPlatformOriginationFeeRate_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setPlatformOriginationFeeRate_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setPlatformOriginationFeeRate(PM_ADDRESS, 20_0000);
 
         vm.prank(GOVERNOR);
@@ -806,10 +930,22 @@ contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
         globals.setPlatformOriginationFeeRate(PM_ADDRESS, 100_0000);
     }
 
-    function test_setPlatformOriginationFeeRate() external {
+    function test_setPlatformOriginationFeeRate_success_governor() external {
         assertEq(globals.platformOriginationFeeRate(PM_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
+        globals.setPlatformOriginationFeeRate(PM_ADDRESS, 20_0000);
+
+        assertEq(globals.platformOriginationFeeRate(PM_ADDRESS), 20_0000);
+    }
+
+    function test_setPlatformOriginationFeeRate_success_operational_admin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        assertEq(globals.platformOriginationFeeRate(PM_ADDRESS), 0);
+
+        vm.prank(OPERATIONAL_ADMIN);
         globals.setPlatformOriginationFeeRate(PM_ADDRESS, 20_0000);
 
         assertEq(globals.platformOriginationFeeRate(PM_ADDRESS), 20_0000);
@@ -821,8 +957,8 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
     address internal PM_ADDRESS = address(new Address());
 
-    function test_setPlatformServiceFeeRate_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
+    function test_setPlatformServiceFeeRate_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
         globals.setPlatformServiceFeeRate(PM_ADDRESS, 20_0000);
 
         vm.prank(GOVERNOR);
@@ -838,10 +974,22 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
         globals.setPlatformServiceFeeRate(PM_ADDRESS, 100_0000);
     }
 
-    function test_setPlatformServiceFeeRate() external {
+    function test_setPlatformServiceFeeRate_success_governor() external {
         assertEq(globals.platformServiceFeeRate(PM_ADDRESS), 0);
 
         vm.prank(GOVERNOR);
+        globals.setPlatformServiceFeeRate(PM_ADDRESS, 20_0000);
+
+        assertEq(globals.platformServiceFeeRate(PM_ADDRESS), 20_0000);
+    }
+
+    function test_setPlatformServiceFeeRate_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        assertEq(globals.platformServiceFeeRate(PM_ADDRESS), 0);
+
+        vm.prank(OPERATIONAL_ADMIN);
         globals.setPlatformServiceFeeRate(PM_ADDRESS, 20_0000);
 
         assertEq(globals.platformServiceFeeRate(PM_ADDRESS), 20_0000);

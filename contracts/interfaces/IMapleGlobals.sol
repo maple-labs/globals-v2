@@ -125,6 +125,13 @@ interface IMapleGlobals is INonTransparentProxied {
     event MinCoverAmountSet(address indexed poolManager_, uint256 minCoverAmount_);
 
     /**
+     *  @dev   The operational admin was set.
+     *  @param previousOperationalAdmin_ The address of the previous operational admin.
+     *  @param currentOperationalAdmin_  The address of the new operational admin.
+     */
+    event OperationalAdminSet(address indexed previousOperationalAdmin_, address indexed currentOperationalAdmin_);
+
+    /**
      *  @dev   The pending governor has been set.
      *  @param pendingGovernor_ The new pending governor.
      */
@@ -388,7 +395,7 @@ interface IMapleGlobals is INonTransparentProxied {
     function maxCoverLiquidationPercent(address poolManager_) external view returns (uint256 maxCoverLiquidationPercent_);
 
     /**
-     *  @dev    Gets migration admin address.
+     *  @dev    Gets the migration admin address.
      *  @return migrationAdmin_ The address of the migration admin.
      */
     function migrationAdmin() external view returns (address migrationAdmin_);
@@ -401,12 +408,10 @@ interface IMapleGlobals is INonTransparentProxied {
     function minCoverAmount(address poolManager_) external view returns (uint256 minCoverAmount_);
 
     /**
-     *  @dev    Gets the address and maximum delay of the oracle for the given asset.
-     *  @param  asset_   The address of the asset to query.
-     *  @return oracle   The address of the oracle.
-     *  @return maxDelay The maximum delay of the oracle.
+     *  @dev    Gets the operational admin address.
+     *  @return operationalAdmin_ The address of the operational admin.
      */
-    function priceOracleOf(address asset_) external view returns (address oracle, uint96 maxDelay);
+    function operationalAdmin() external view returns (address operationalAdmin_);
 
     /**
      *  @dev    Gets the address of the owner pool manager.
@@ -414,6 +419,14 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return poolManager_ The address of the pool manager.
      */
     function ownedPoolManager(address account_) external view returns (address poolManager_);
+
+    /**
+     *  @dev    Gets the address and maximum delay of the oracle for the given asset.
+     *  @param  asset_   The address of the asset to query.
+     *  @return oracle   The address of the oracle.
+     *  @return maxDelay The maximum delay of the oracle.
+     */
+    function priceOracleOf(address asset_) external view returns (address oracle, uint96 maxDelay);
 
     /**
      *  @dev    Gets the pending governor address.
@@ -536,6 +549,12 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param migrationAdmin_ The address of the migration admin.
      */
     function setMigrationAdmin(address migrationAdmin_) external;
+
+    /**
+     *  @dev   Sets the address of the operational admin.
+     *  @param operationalAdmin_ The address of the operational admin.
+     */
+    function setOperationalAdmin(address operationalAdmin_) external;
 
     /**
      *  @dev   Sets the price oracle for the given asset.

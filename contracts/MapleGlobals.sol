@@ -90,12 +90,19 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => mapping(address => bool)) internal _canDeployFrom;
 
+    address public override operationalAdmin;
+
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
     /**************************************************************************************************************************************/
 
     modifier onlyGovernor() {
         _revertIfNotGovernor();
+        _;
+    }
+
+    modifier onlyGovernorOrOperationalAdmin() {
+        _revertIfNotGovernorOrOperationalAdmin();
         _;
     }
 
@@ -124,7 +131,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************************************************************************************************************************/
 
     // NOTE: `minCoverAmount` is not enforced at activation time.
-    function activatePoolManager(address poolManager_) external override onlyGovernor {
+    function activatePoolManager(address poolManager_) external override onlyGovernorOrOperationalAdmin {
         address factory_  = IPoolManagerLike(poolManager_).factory();
         address delegate_ = IPoolManagerLike(poolManager_).poolDelegate();
 
@@ -140,7 +147,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         IPoolManagerLike(poolManager_).setActive(true);
     }
 
-    function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernor {
+    function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernorOrOperationalAdmin {
         emit BootstrapMintSet(asset_, bootstrapMint[asset_] = amount_);
     }
 
@@ -164,6 +171,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     function setMigrationAdmin(address migrationAdmin_) external override onlyGovernor {
         emit MigrationAdminSet(migrationAdmin, migrationAdmin_);
         migrationAdmin = migrationAdmin_;
+    }
+
+    function setOperationalAdmin(address operationalAdmin_) external override onlyGovernor {
+        emit OperationalAdminSet(operationalAdmin, operationalAdmin_);
+        operationalAdmin = operationalAdmin_;
     }
 
     function setPriceOracle(address asset_, address oracle_, uint96 maxDelay_) external override onlyGovernor {
@@ -214,11 +226,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Allowlist Setters                                                                                                              ***/
     /**************************************************************************************************************************************/
 
-    function setCanDeployFrom(address factory_, address account_, bool canDeployFrom_) external override onlyGovernor {
+    function setCanDeployFrom(address factory_, address account_, bool canDeployFrom_) external override onlyGovernorOrOperationalAdmin {
         emit CanDeployFromSet(factory_, account_, _canDeployFrom[factory_][account_] = canDeployFrom_);
     }
 
-    function setValidBorrower(address borrower_, bool isValid_) external override onlyGovernor {
+    function setValidBorrower(address borrower_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
         isBorrower[borrower_] = isValid_;
         emit ValidBorrowerSet(borrower_, isValid_);
     }
@@ -228,7 +240,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidCollateralAssetSet(collateralAsset_, isValid_);
     }
 
-    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external override onlyGovernor {
+    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
         isInstanceOf[instanceKey_][instance_] = isValid_;
         emit ValidInstanceSet(instanceKey_, instance_, isValid_);
     }
@@ -238,7 +250,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidPoolAssetSet(poolAsset_, isValid_);
     }
 
-    function setValidPoolDelegate(address account_, bool isValid_) external override onlyGovernor {
+    function setValidPoolDelegate(address account_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
         require(account_ != address(0), "MG:SVPD:ZERO_ADDR");
 
         // Cannot remove pool delegates that own a pool manager.
@@ -268,13 +280,18 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Cover Setters                                                                                                                  ***/
     /**************************************************************************************************************************************/
 
-    function setMaxCoverLiquidationPercent(address poolManager_, uint256 maxCoverLiquidationPercent_) external override onlyGovernor {
+    function setMaxCoverLiquidationPercent(
+        address poolManager_,
+        uint256 maxCoverLiquidationPercent_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(maxCoverLiquidationPercent_ <= HUNDRED_PERCENT, "MG:SMCLP:GT_100");
         maxCoverLiquidationPercent[poolManager_] = maxCoverLiquidationPercent_;
         emit MaxCoverLiquidationPercentSet(poolManager_, maxCoverLiquidationPercent_);
     }
 
-    function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override onlyGovernor {
+    function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override onlyGovernorOrOperationalAdmin {
         minCoverAmount[poolManager_] = minCoverAmount_;
         emit MinCoverAmountSet(poolManager_, minCoverAmount_);
     }
@@ -283,19 +300,34 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Fee Setters                                                                                                                    ***/
     /**************************************************************************************************************************************/
 
-    function setPlatformManagementFeeRate(address poolManager_, uint256 platformManagementFeeRate_) external override onlyGovernor {
+    function setPlatformManagementFeeRate(
+        address poolManager_,
+        uint256 platformManagementFeeRate_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(platformManagementFeeRate_ <= HUNDRED_PERCENT, "MG:SPMFR:RATE_GT_100");
         platformManagementFeeRate[poolManager_] = platformManagementFeeRate_;
         emit PlatformManagementFeeRateSet(poolManager_, platformManagementFeeRate_);
     }
 
-    function setPlatformOriginationFeeRate(address poolManager_, uint256 platformOriginationFeeRate_) external override onlyGovernor {
+    function setPlatformOriginationFeeRate(
+        address poolManager_,
+        uint256 platformOriginationFeeRate_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(platformOriginationFeeRate_ <= HUNDRED_PERCENT, "MG:SPOFR:RATE_GT_100");
         platformOriginationFeeRate[poolManager_] = platformOriginationFeeRate_;
         emit PlatformOriginationFeeRateSet(poolManager_, platformOriginationFeeRate_);
     }
 
-    function setPlatformServiceFeeRate(address poolManager_, uint256 platformServiceFeeRate_) external override onlyGovernor {
+    function setPlatformServiceFeeRate(
+        address poolManager_,
+        uint256 platformServiceFeeRate_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(platformServiceFeeRate_ <= HUNDRED_PERCENT, "MG:SPSFR:RATE_GT_100");
         platformServiceFeeRate[poolManager_] = platformServiceFeeRate_;
         emit PlatformServiceFeeRateSet(poolManager_, platformServiceFeeRate_);
@@ -494,6 +526,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function _revertIfNotGovernor() internal view {
         require(msg.sender == admin(), "MG:NOT_GOV");
+    }
+
+    function _revertIfNotGovernorOrOperationalAdmin() internal view {
+        require(msg.sender == admin() || msg.sender == operationalAdmin, "MG:NOT_GOV_OR_OA");
     }
 
     function _revertIfNotGovernorOrSecurityAdmin() internal view {
