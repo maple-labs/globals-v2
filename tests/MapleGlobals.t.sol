@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.7;
 
-import { Address, TestUtils }  from "../modules/contract-test-utils/contracts/test.sol";
+import { Test }                from "../modules/forge-std/src/Test.sol";
 import { NonTransparentProxy } from "../modules/non-transparent-proxy/contracts/NonTransparentProxy.sol";
 
 import { MapleGlobals } from "../contracts/MapleGlobals.sol";
@@ -13,11 +13,11 @@ import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/
 // - canDeploy/canDeployFrom
 // - isPoolDeployer
 
-contract BaseMapleGlobalsTest is TestUtils {
+contract BaseMapleGlobalsTest is Test {
 
-    address internal GOVERNOR          = address(new Address());
-    address internal OPERATIONAL_ADMIN = address(new Address());
-    address internal SET_ADDRESS       = address(new Address());
+    address internal GOVERNOR          = makeAddr("GOVERNOR");
+    address internal OPERATIONAL_ADMIN = makeAddr("OPERATIONAL_ADMIN");
+    address internal SET_ADDRESS       = makeAddr("SET_ADDRESS");
 
     uint96 internal MAX_DELAY = 86400 seconds;
 
@@ -75,7 +75,7 @@ contract TransferGovernorTests is BaseMapleGlobalsTest {
 
 contract ActivatePoolManagerTests is BaseMapleGlobalsTest {
 
-    address internal admin = address(new Address());
+    address internal admin = makeAddr("admin");
 
     MockPoolManager  internal manager = new MockPoolManager(admin);
     MockProxyFactory internal factory = new MockProxyFactory();
@@ -231,7 +231,7 @@ contract SetOperationalAdminTests is BaseMapleGlobalsTest {
 
 contract SetPriceOracleTests is BaseMapleGlobalsTest {
 
-    address internal ASSET = address(new Address());
+    address internal ASSET = makeAddr("ASSET");
 
     function test_setPriceOracle_notGovernor() external {
         vm.expectRevert("MG:NOT_GOV");
@@ -340,8 +340,8 @@ contract SetDefaultTimelockParametersTests is BaseMapleGlobalsTest {
 
 contract SetContractPauseTests is BaseMapleGlobalsTest {
 
-    address internal CONTRACT       = address(new Address());
-    address internal SECURITY_ADMIN = address(new Address());
+    address internal CONTRACT       = makeAddr("CONTRACT");
+    address internal SECURITY_ADMIN = makeAddr("SECURITY_ADMIN");
 
     function setUp() public override {
         super.setUp();
@@ -387,8 +387,8 @@ contract SetContractPauseTests is BaseMapleGlobalsTest {
 
 contract SetFunctionUnpauseTests is BaseMapleGlobalsTest {
 
-    address internal CONTRACT       = address(new Address());
-    address internal SECURITY_ADMIN = address(new Address());
+    address internal CONTRACT       = makeAddr("CONTRACT");
+    address internal SECURITY_ADMIN = makeAddr("SECURITY_ADMIN");
 
     bytes4 internal SIG = bytes4(0x12345678);
 
@@ -436,7 +436,7 @@ contract SetFunctionUnpauseTests is BaseMapleGlobalsTest {
 
 contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 
-    address internal SECURITY_ADMIN = address(new Address());
+    address internal SECURITY_ADMIN = makeAddr("SECURITY_ADMIN");
 
     function setUp() public override {
         super.setUp();
@@ -486,7 +486,7 @@ contract SetProtocolPauseTests is BaseMapleGlobalsTest {
 
 contract SetCanDeployFromTests is BaseMapleGlobalsTest {
 
-    address FACTORY = address(new Address());
+    address FACTORY = makeAddr("FACTORY");
 
     function test_setCanDeployFrom_notAuthorized() external {
         vm.expectRevert("MG:NOT_GOV_OR_OA");
@@ -720,7 +720,7 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
 
 contract SetManualOverridePriceTests is BaseMapleGlobalsTest {
 
-    address internal ASSET = address(new Address());
+    address internal ASSET = makeAddr("ASSET");
 
     function test_setManualOverridePrice_notGovernor() external {
         vm.expectRevert("MG:NOT_GOV");
@@ -867,7 +867,7 @@ contract SetBootstrapMintTests is BaseMapleGlobalsTest {
 
 contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
-    address internal PM_ADDRESS = address(new Address());
+    address internal PM_ADDRESS = makeAddr("PM_ADDRESS");
 
     function test_setPlatformManagementFeeRate_notAuthorized() external {
         vm.expectRevert("MG:NOT_GOV_OR_OA");
@@ -911,7 +911,7 @@ contract SetPlatformManagementFeeRateTests is BaseMapleGlobalsTest {
 
 contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
 
-    address internal PM_ADDRESS = address(new Address());
+    address internal PM_ADDRESS = makeAddr("PM_ADDRESS");
 
     function test_setPlatformOriginationFeeRate_notAuthorized() external {
         vm.expectRevert("MG:NOT_GOV_OR_OA");
@@ -955,7 +955,7 @@ contract SetPlatformOriginationFeeRateTests is BaseMapleGlobalsTest {
 
 contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
-    address internal PM_ADDRESS = address(new Address());
+    address internal PM_ADDRESS = makeAddr("PM_ADDRESS");
 
     function test_setPlatformServiceFeeRate_notAuthorized() external {
         vm.expectRevert("MG:NOT_GOV_OR_OA");
@@ -1003,8 +1003,8 @@ contract SetPlatformServiceFeeRateTests is BaseMapleGlobalsTest {
 
 contract SetTimelockWindowTests is BaseMapleGlobalsTest {
 
-    address internal CONTRACT      = address(new Address());
-    address internal POOL_DELEGATE = address(new Address());
+    address internal CONTRACT      = makeAddr("CONTRACT");
+    address internal POOL_DELEGATE = makeAddr("POOL_DELEGATE");
 
     bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
     bytes32 internal constant FUNCTION_ID_2 = "FUNCTION_ID_2";
@@ -1083,8 +1083,8 @@ contract SetTimelockWindowTests is BaseMapleGlobalsTest {
 
 contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
 
-    address internal POOL_DELEGATE_1 = address(new Address());
-    address internal POOL_DELEGATE_2 = address(new Address());
+    address internal POOL_DELEGATE_1 = makeAddr("POOL_DELEGATE_1");
+    address internal POOL_DELEGATE_2 = makeAddr("POOL_DELEGATE_2");
 
     MockPoolManager  internal manager = new MockPoolManager(POOL_DELEGATE_1);
     MockProxyFactory internal factory = new MockProxyFactory();
@@ -1157,7 +1157,7 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
 
 contract ScheduleCallTests is BaseMapleGlobalsTest {
 
-    address internal CONTRACT = address(new Address());
+    address internal CONTRACT = makeAddr("CONTRACT");
 
     bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
 
@@ -1215,7 +1215,7 @@ contract ScheduleCallTests is BaseMapleGlobalsTest {
 
 contract IsValidScheduledCallTests is BaseMapleGlobalsTest {
 
-    address internal CONTRACT = address(new Address());
+    address internal CONTRACT = makeAddr("CONTRACT");
 
     bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
 
@@ -1250,7 +1250,7 @@ contract IsValidScheduledCallTests is BaseMapleGlobalsTest {
 
 contract UnScheduleCallTests is BaseMapleGlobalsTest {
 
-    address internal CONTRACT = address(new Address());
+    address internal CONTRACT = makeAddr("CONTRACT");
 
     bytes32 internal constant FUNCTION_ID_1 = "FUNCTION_ID_1";
 
@@ -1329,12 +1329,12 @@ contract UnScheduleCallTests is BaseMapleGlobalsTest {
 // NOTE: Also tests `canDeploy`
 contract canDeployFromTests is BaseMapleGlobalsTest {
 
-    address internal CALLER        = address(new Address());
-    address internal FACTORY       = address(new Address());
-    address internal LM_FACTORY    = address(new Address());
-    address internal LOAN_FACTORY  = address(new Address());
-    address internal POOL_DELEGATE = address(new Address());
-    address internal BORROWER      = address(new Address());
+    address internal CALLER        = makeAddr("CALLER");
+    address internal FACTORY       = makeAddr("FACTORY");
+    address internal LM_FACTORY    = makeAddr("LM_FACTORY");
+    address internal LOAN_FACTORY  = makeAddr("LOAN_FACTORY");
+    address internal POOL_DELEGATE = makeAddr("POOL_DELEGATE");
+    address internal BORROWER      = makeAddr("BORROWER");
 
     MockPoolManager  internal poolManager        = new MockPoolManager(POOL_DELEGATE);
     MockProxyFactory internal poolManagerFactory = new MockProxyFactory();
@@ -1459,7 +1459,7 @@ contract canDeployFromTests is BaseMapleGlobalsTest {
 
 contract GetLatestPriceTests is BaseMapleGlobalsTest {
 
-    address internal ASSET = address(new Address());
+    address internal ASSET = makeAddr("ASSET");
 
     MockChainlinkOracle internal oracle = new MockChainlinkOracle();
 
@@ -1471,7 +1471,7 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
     }
 
     function test_getLatestPrice_oracleNotSet() external {
-        address secondAsset = address(new Address());
+        address secondAsset = makeAddr("secondAsset");
 
         vm.expectRevert("MG:GLP:ZERO_ORACLE");
         globals.getLatestPrice(secondAsset);
@@ -1535,7 +1535,7 @@ contract GetLatestPriceTests is BaseMapleGlobalsTest {
 
 contract IsFunctionPausedTests is BaseMapleGlobalsTest {
 
-    address internal CONTRACT = address(new Address());
+    address internal CONTRACT = makeAddr("CONTRACT");
 
     bytes4 internal SIG = bytes4(0x12345678);
 
@@ -1638,8 +1638,8 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_fixedTermLoanFactory_deployerCannotDeploy() external {
-        address instance = address(new Address());
-        address caller   = address(new Address());
+        address instance = makeAddr("instance");
+        address caller   = makeAddr("caller");
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance, true);
@@ -1650,7 +1650,7 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_fixedTermLoanFactory_poolManagerNotInstance() external {
-        address instance = address(new Address());
+        address instance = makeAddr("instance");
 
         poolManagerFactory = new MockProxyFactory();
         poolManager        = new MockPoolManager(address(0));
@@ -1668,7 +1668,7 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_fixedTermLoanFactory_poolManagerNotFromValidFactory() external {
-        address instance = address(new Address());
+        address instance = makeAddr("instance");
 
         poolManagerFactory = new MockProxyFactory();
         poolManager        = new MockPoolManager(address(0));
@@ -1687,7 +1687,7 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_fixedTermLoanFactory_deployerIsPoolManager() external {
-        address instance = address(new Address());
+        address instance = makeAddr("instance");
 
         poolManagerFactory = new MockProxyFactory();
         poolManager        = new MockPoolManager(address(0));
@@ -1706,8 +1706,8 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_fixedTermLoanFactory_deployerCanDeploy() external {
-        address instance     = address(new Address());
-        address poolDeployer = address(new Address());
+        address instance     = makeAddr("instance");
+        address poolDeployer = makeAddr("poolDeployer");
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("FT_LOAN_MANAGER_FACTORY", instance, true);
@@ -1719,8 +1719,8 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_poolManagerFactory_deployerCannotDeploy() external {
-        address instance = address(new Address());
-        address caller   = address(new Address());
+        address instance = makeAddr("instance");
+        address caller   = makeAddr("caller");
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("POOL_MANAGER_FACTORY", instance, true);
@@ -1731,8 +1731,8 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_poolManagerFactory_deployerCanDeploy() external {
-        address instance = address(new Address());
-        address caller   = address(new Address());
+        address instance = makeAddr("instance");
+        address caller   = makeAddr("caller");
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("POOL_MANAGER_FACTORY", instance, true);
@@ -1744,8 +1744,8 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_withdrawalManagerFactory_deployerCannotDeploy() external {
-        address instance = address(new Address());
-        address caller   = address(new Address());
+        address instance = makeAddr("instance");
+        address caller   = makeAddr("caller");
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("WITHDRAWAL_MANAGER_FACTORY", instance, true);
@@ -1756,8 +1756,8 @@ contract IsPoolDeployerTest is BaseMapleGlobalsTest {
     }
 
     function test_isPoolDeployer_withdrawalManagerFactory_deployerCanDeploy() external {
-        address instance = address(new Address());
-        address caller   = address(new Address());
+        address instance = makeAddr("instance");
+        address caller   = makeAddr("caller");
 
         vm.startPrank(GOVERNOR);
         globals.setValidInstanceOf("WITHDRAWAL_MANAGER_FACTORY", instance, true);
