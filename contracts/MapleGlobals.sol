@@ -39,6 +39,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         uint128 duration;
     }
 
+    struct PriceOracle {
+        address oracle;
+        uint96  maxDelay;
+    }
+
     /**************************************************************************************************************************************/
     /*** Storage                                                                                                                        ***/
     /**************************************************************************************************************************************/
@@ -54,7 +59,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     TimelockParameters public override defaultTimelockParameters;
 
-    mapping(address => address) public override oracleFor;
+    mapping(address => PriceOracle) public override priceOracleOf;
 
     mapping(address => bool) public override isBorrower;
     mapping(address => bool) public override isCollateralAsset;
@@ -85,12 +90,19 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     mapping(address => mapping(address => bool)) internal _canDeployFrom;
 
+    address public override operationalAdmin;
+
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
     /**************************************************************************************************************************************/
 
     modifier onlyGovernor() {
         _revertIfNotGovernor();
+        _;
+    }
+
+    modifier onlyGovernorOrOperationalAdmin() {
+        _revertIfNotGovernorOrOperationalAdmin();
         _;
     }
 
@@ -119,7 +131,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************************************************************************************************************************/
 
     // NOTE: `minCoverAmount` is not enforced at activation time.
-    function activatePoolManager(address poolManager_) external override onlyGovernor {
+    function activatePoolManager(address poolManager_) external override onlyGovernorOrOperationalAdmin {
         address factory_  = IPoolManagerLike(poolManager_).factory();
         address delegate_ = IPoolManagerLike(poolManager_).poolDelegate();
 
@@ -135,7 +147,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         IPoolManagerLike(poolManager_).setActive(true);
     }
 
-    function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernor {
+    function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernorOrOperationalAdmin {
         emit BootstrapMintSet(asset_, bootstrapMint[asset_] = amount_);
     }
 
@@ -161,10 +173,19 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         migrationAdmin = migrationAdmin_;
     }
 
-    function setPriceOracle(address asset_, address oracle_) external override onlyGovernor {
+    function setOperationalAdmin(address operationalAdmin_) external override onlyGovernor {
+        emit OperationalAdminSet(operationalAdmin, operationalAdmin_);
+        operationalAdmin = operationalAdmin_;
+    }
+
+    function setPriceOracle(address asset_, address oracle_, uint96 maxDelay_) external override onlyGovernor {
         require(oracle_ != address(0) && asset_ != address(0), "MG:SPO:ZERO_ADDR");
-        oracleFor[asset_] = oracle_;
-        emit PriceOracleSet(asset_, oracle_);
+        require(maxDelay_ > 0,                                 "MG:SPO:ZERO_TIME");
+
+        priceOracleOf[asset_].oracle   = oracle_;
+        priceOracleOf[asset_].maxDelay = maxDelay_;
+
+        emit PriceOracleSet(asset_, oracle_, maxDelay_);
     }
 
     function setSecurityAdmin(address securityAdmin_) external override onlyGovernor {
@@ -205,11 +226,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Allowlist Setters                                                                                                              ***/
     /**************************************************************************************************************************************/
 
-    function setCanDeployFrom(address factory_, address account_, bool canDeployFrom_) external override onlyGovernor {
+    function setCanDeployFrom(address factory_, address account_, bool canDeployFrom_) external override onlyGovernorOrOperationalAdmin {
         emit CanDeployFromSet(factory_, account_, _canDeployFrom[factory_][account_] = canDeployFrom_);
     }
 
-    function setValidBorrower(address borrower_, bool isValid_) external override onlyGovernor {
+    function setValidBorrower(address borrower_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
         isBorrower[borrower_] = isValid_;
         emit ValidBorrowerSet(borrower_, isValid_);
     }
@@ -219,7 +240,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidCollateralAssetSet(collateralAsset_, isValid_);
     }
 
-    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external override onlyGovernor {
+    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
         isInstanceOf[instanceKey_][instance_] = isValid_;
         emit ValidInstanceSet(instanceKey_, instance_, isValid_);
     }
@@ -229,7 +250,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidPoolAssetSet(poolAsset_, isValid_);
     }
 
-    function setValidPoolDelegate(address account_, bool isValid_) external override onlyGovernor {
+    function setValidPoolDelegate(address account_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
         require(account_ != address(0), "MG:SVPD:ZERO_ADDR");
 
         // Cannot remove pool delegates that own a pool manager.
@@ -259,13 +280,18 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Cover Setters                                                                                                                  ***/
     /**************************************************************************************************************************************/
 
-    function setMaxCoverLiquidationPercent(address poolManager_, uint256 maxCoverLiquidationPercent_) external override onlyGovernor {
+    function setMaxCoverLiquidationPercent(
+        address poolManager_,
+        uint256 maxCoverLiquidationPercent_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(maxCoverLiquidationPercent_ <= HUNDRED_PERCENT, "MG:SMCLP:GT_100");
         maxCoverLiquidationPercent[poolManager_] = maxCoverLiquidationPercent_;
         emit MaxCoverLiquidationPercentSet(poolManager_, maxCoverLiquidationPercent_);
     }
 
-    function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override onlyGovernor {
+    function setMinCoverAmount(address poolManager_, uint256 minCoverAmount_) external override onlyGovernorOrOperationalAdmin {
         minCoverAmount[poolManager_] = minCoverAmount_;
         emit MinCoverAmountSet(poolManager_, minCoverAmount_);
     }
@@ -274,19 +300,34 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** Fee Setters                                                                                                                    ***/
     /**************************************************************************************************************************************/
 
-    function setPlatformManagementFeeRate(address poolManager_, uint256 platformManagementFeeRate_) external override onlyGovernor {
+    function setPlatformManagementFeeRate(
+        address poolManager_,
+        uint256 platformManagementFeeRate_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(platformManagementFeeRate_ <= HUNDRED_PERCENT, "MG:SPMFR:RATE_GT_100");
         platformManagementFeeRate[poolManager_] = platformManagementFeeRate_;
         emit PlatformManagementFeeRateSet(poolManager_, platformManagementFeeRate_);
     }
 
-    function setPlatformOriginationFeeRate(address poolManager_, uint256 platformOriginationFeeRate_) external override onlyGovernor {
+    function setPlatformOriginationFeeRate(
+        address poolManager_,
+        uint256 platformOriginationFeeRate_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(platformOriginationFeeRate_ <= HUNDRED_PERCENT, "MG:SPOFR:RATE_GT_100");
         platformOriginationFeeRate[poolManager_] = platformOriginationFeeRate_;
         emit PlatformOriginationFeeRateSet(poolManager_, platformOriginationFeeRate_);
     }
 
-    function setPlatformServiceFeeRate(address poolManager_, uint256 platformServiceFeeRate_) external override onlyGovernor {
+    function setPlatformServiceFeeRate(
+        address poolManager_,
+        uint256 platformServiceFeeRate_
+    )
+        external override onlyGovernorOrOperationalAdmin
+    {
         require(platformServiceFeeRate_ <= HUNDRED_PERCENT, "MG:SPSFR:RATE_GT_100");
         platformServiceFeeRate[poolManager_] = platformServiceFeeRate_;
         emit PlatformServiceFeeRateSet(poolManager_, platformServiceFeeRate_);
@@ -391,29 +432,31 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function canDeployFrom(address factory_, address caller_) public override view returns (bool canDeployFrom_) {
         // Simply check if the caller can deploy at the factory. If not, since a PoolManager is often deployed in the same transaction as
-        // the LoanManagers it deploys, check if `factory_` is a LoanManagerFactory and the caller is a PoolManager.
-        canDeployFrom_ = _canDeployFrom[factory_][caller_] || (isInstanceOf["LOAN_MANAGER_FACTORY"][factory_] && _isPoolManager(caller_));
+        // the LoanManagers it deploys, check if `factory_` is a LoanManagerFactory and the caller is a PoolManager or
+        // if the factory is a loan factory and the caller is a valid borrower.
+        canDeployFrom_ = _canDeployFrom[factory_][caller_] ||
+                         (isInstanceOf["LOAN_FACTORY"][factory_] && isBorrower[caller_]) ||
+                         (isInstanceOf["LOAN_MANAGER_FACTORY"][factory_] && _isPoolManager(caller_));
     }
 
     function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
         // If governor has overridden price because of oracle outage, return overridden price.
         if (manualOverridePrice[asset_] != 0) return manualOverridePrice[asset_];
 
-        address oracle_ = oracleFor[asset_];
+        address oracle_ = priceOracleOf[asset_].oracle;
 
         require(oracle_ != address(0), "MG:GLP:ZERO_ORACLE");
 
         (
-            uint80 roundId_,
+            ,
             int256 price_,
             ,
             uint256 updatedAt_,
-            uint80 answeredInRound_
         ) = IChainlinkAggregatorV3Like(oracle_).latestRoundData();
 
-        require(updatedAt_ != 0,              "MG:GLP:ROUND_NOT_COMPLETE");
-        require(answeredInRound_ >= roundId_, "MG:GLP:STALE_DATA");
-        require(price_ > int256(0),           "MG:GLP:ZERO_PRICE");
+        require(updatedAt_ != 0,                                                  "MG:GLP:ROUND_NOT_COMPLETE");
+        require(updatedAt_ >= (block.timestamp - priceOracleOf[asset_].maxDelay), "MG:GLP:STALE_PRICE");
+        require(price_ > int256(0),                                               "MG:GLP:ZERO_PRICE");
 
         latestPrice_ = uint256(price_);
     }
@@ -483,6 +526,10 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function _revertIfNotGovernor() internal view {
         require(msg.sender == admin(), "MG:NOT_GOV");
+    }
+
+    function _revertIfNotGovernorOrOperationalAdmin() internal view {
+        require(msg.sender == admin() || msg.sender == operationalAdmin, "MG:NOT_GOV_OR_OA");
     }
 
     function _revertIfNotGovernorOrSecurityAdmin() internal view {

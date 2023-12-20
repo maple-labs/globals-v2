@@ -3,9 +3,7 @@ pragma solidity ^0.8.7;
 
 contract MockChainlinkOracle {
 
-    uint80  public answeredInRound;
     int256  public price;
-    uint80  public roundId;
     uint256 public updatedAt;
 
     function latestRoundData() external view returns (
@@ -15,23 +13,16 @@ contract MockChainlinkOracle {
         uint256 updatedAt_,
         uint80  answeredInRound_
     ) {
-        roundId_         = roundId;
+        roundId_;
+        answeredInRound_;  // to silence the compiler warning
+
         price_           = price;
         startedAt_       = 0;
         updatedAt_       = updatedAt;
-        answeredInRound_ = answeredInRound;
-    }
-
-    function __setAnsweredInRound(uint80 answeredInRound_) external {
-        answeredInRound = answeredInRound_;
     }
 
     function __setPrice(int256 price_) external {
         price = price_;
-    }
-
-    function __setRoundId(uint80 roundId_) external {
-        roundId = roundId_;
     }
 
     function __setUpdatedAt(uint256 updatedAt_) external {
