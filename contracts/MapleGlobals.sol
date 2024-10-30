@@ -436,7 +436,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         // if the factory is a loan factory and the caller is a valid borrower.
         canDeployFrom_ = _canDeployFrom[factory_][caller_] ||
                          (isInstanceOf["LOAN_FACTORY"][factory_] && isBorrower[caller_]) ||
-                         (isInstanceOf["LOAN_MANAGER_FACTORY"][factory_] && _isPoolManager(caller_));
+                         (isInstanceOf["STRATEGY_FACTORY"][factory_] && _isPoolManager(caller_));
     }
 
     function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
