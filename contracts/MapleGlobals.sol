@@ -432,7 +432,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function canDeployFrom(address factory_, address caller_) public override view returns (bool canDeployFrom_) {
         // Simply check if the caller can deploy at the factory. If not, since a PoolManager is often deployed in the same transaction as
-        // the LoanManagers it deploys, check if `factory_` is a LoanManagerFactory and the caller is a PoolManager or
+        // the Strategies it deploys, check if `factory_` is a StrategyFactory and the caller is a PoolManager or
         // if the factory is a loan factory and the caller is a valid borrower.
         canDeployFrom_ = _canDeployFrom[factory_][caller_] ||
                          (isInstanceOf["LOAN_FACTORY"][factory_] && isBorrower[caller_]) ||
