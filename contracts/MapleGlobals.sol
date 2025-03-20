@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.7;
+pragma solidity ^0.8.25;
 
 import { NonTransparentProxied } from "../modules/non-transparent-proxy/contracts/NonTransparentProxied.sol";
 
@@ -432,11 +432,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     function canDeployFrom(address factory_, address caller_) public override view returns (bool canDeployFrom_) {
         // Simply check if the caller can deploy at the factory. If not, since a PoolManager is often deployed in the same transaction as
-        // the LoanManagers it deploys, check if `factory_` is a LoanManagerFactory and the caller is a PoolManager or
+        // the Strategies it deploys, check if `factory_` is a StrategyFactory and the caller is a PoolManager or
         // if the factory is a loan factory and the caller is a valid borrower.
         canDeployFrom_ = _canDeployFrom[factory_][caller_] ||
                          (isInstanceOf["LOAN_FACTORY"][factory_] && isBorrower[caller_]) ||
-                         (isInstanceOf["LOAN_MANAGER_FACTORY"][factory_] && _isPoolManager(caller_));
+                         (isInstanceOf["STRATEGY_FACTORY"][factory_] && _isPoolManager(caller_));
     }
 
     function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
