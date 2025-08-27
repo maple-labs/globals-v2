@@ -11,13 +11,13 @@ contract GovernorTimelock is IGovernorTimelock {
     /*** Storage                                                                                                                        ***/
     /**************************************************************************************************************************************/
 
-    bytes32 public constant PROPOSER_ROLE  = keccak256("PROPOSER_ROLE");
-    bytes32 public constant EXECUTOR_ROLE  = keccak256("EXECUTOR_ROLE");
-    bytes32 public constant CANCELLER_ROLE = keccak256("CANCELLER_ROLE");
-    bytes32 public constant ROLE_ADMIN     = keccak256("ROLE_ADMIN");
+    bytes32 public override constant PROPOSER_ROLE  = keccak256("PROPOSER_ROLE");
+    bytes32 public override constant EXECUTOR_ROLE  = keccak256("EXECUTOR_ROLE");
+    bytes32 public override constant CANCELLER_ROLE = keccak256("CANCELLER_ROLE");
+    bytes32 public override constant ROLE_ADMIN     = keccak256("ROLE_ADMIN");
 
-    uint32 public constant MIN_DELAY            = 1 days;
-    uint32 public constant MIN_EXECUTION_WINDOW = 1 days;
+    uint32 public override constant MIN_DELAY            = 1 days;
+    uint32 public override constant MIN_EXECUTION_WINDOW = 1 days;
 
     address public override pendingTokenWithdrawer;
     address public override tokenWithdrawer;

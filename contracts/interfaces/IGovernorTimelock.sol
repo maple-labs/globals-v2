@@ -88,6 +88,54 @@ interface IGovernorTimelock {
     event TokenWithdrawerAccepted(address indexed tokenWithdrawer);
 
     /**************************************************************************************************************************************/
+    /*** Role constants                                                                                                                 ***/
+    /**************************************************************************************************************************************/
+
+    /**
+     * @notice Returns the bytes32 representation of the canceler role
+     * @dev    Address that has the canceler role can unschedule proposals but can not unschedule role updates
+     * @return cancelerRole The canceler role
+     */
+    function CANCELLER_ROLE() external view returns (bytes32 cancelerRole);
+
+    /**
+     * @notice Returns the bytes32 representation of the executor role
+     * @dev    Address that has the executor role can execute all proposals including role updates
+     * @return executorRole The executor role
+     */
+    function EXECUTOR_ROLE() external view returns (bytes32 executorRole);
+
+    /**
+     * @notice Returns the bytes32 representation of the proposer role
+     * @dev    Address that has the proposer role can schedule proposals but can not schedule role updates
+     * @return proposerRole The proposer role
+     */
+    function PROPOSER_ROLE() external view returns (bytes32 proposerRole);
+
+    /**
+     * @notice Returns the bytes32 representation of the role admin role
+     * @dev    Address that has the role admin role can update roles including the role admin role itself
+     * @return roleAdmin The role admin role
+     */
+    function ROLE_ADMIN() external view returns (bytes32 roleAdmin);
+
+    /**************************************************************************************************************************************/
+    /*** Timelock constants                                                                                                             ***/
+    /**************************************************************************************************************************************/
+
+    /**
+     * @notice Returns the minimum delay for a proposal
+     * @return minDelay The minimum delay for a proposal
+     */
+    function MIN_DELAY() external view returns (uint32 minDelay);
+
+    /**
+     * @notice Returns the minimum execution window for a proposal
+     * @return minExecutionWindow The minimum execution window for a proposal
+     */
+    function MIN_EXECUTION_WINDOW() external view returns (uint32 minExecutionWindow);
+
+    /**************************************************************************************************************************************/
     /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
 
