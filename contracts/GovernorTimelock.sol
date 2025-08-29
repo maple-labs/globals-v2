@@ -167,9 +167,7 @@ contract GovernorTimelock is IGovernorTimelock {
             require(isExecutable(proposalIds_[i]),                   "GT:EP:NOT_EXECUTABLE");
             require(expectedProposalHash_ == proposal_.proposalHash, "GT:EP:INVALID_DATA");
 
-            ( bool success_, ) = targets_[i].call(data_[i]);
-
-            require(success_, "GT:EP:FAILED");
+            _call(targets_[i], data_[i]);
 
             delete proposals[proposalIds_[i]];
 
@@ -213,6 +211,23 @@ contract GovernorTimelock is IGovernorTimelock {
     /**************************************************************************************************************************************/
     /*** Internal Functions                                                                                                             ***/
     /**************************************************************************************************************************************/
+
+    function _call(address target_, bytes calldata calldata_) internal {
+        ( bool success_, bytes memory returndata_ ) = target_.call(calldata_);
+
+        if (success_) {
+            return;
+        }
+
+        if (returndata_.length > 0) {
+            assembly {
+                let size_ := mload(returndata_)
+                revert(add(32, returndata_), size_)
+            }
+        } else {
+            revert("GT:EP:CALL_FAILED");
+        }
+    }
 
     function _getTimelockParameters(
         address target_, bytes4 selector_, bytes memory parameters_

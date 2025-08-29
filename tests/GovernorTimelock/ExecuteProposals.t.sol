@@ -144,13 +144,18 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
 
         vm.warp(block.timestamp + delay);
 
-        vm.mockCallRevert(targets[0], abi.encode(functionToCall1, randomParameters1), abi.encode(false));
-
         uint256[] memory proposalIds = new uint256[](2);
-        proposalIds[0]               = 1;
-        proposalIds[1]               = 2;
 
-        vm.expectRevert("GT:EP:FAILED");
+        proposalIds[0] = 1;
+        proposalIds[1] = 2;
+
+        vm.mockCallRevert(targets[0], abi.encode(functionToCall1, randomParameters1), "UNDERLYING_MESSAGE");
+        vm.expectRevert("UNDERLYING_MESSAGE");
+        vm.prank(executor);
+        timelock.executeProposals(proposalIds, targets, data);
+
+        vm.mockCallRevert(targets[0], abi.encode(functionToCall1, randomParameters1), "");
+        vm.expectRevert("GT:EP:CALL_FAILED");
         vm.prank(executor);
         timelock.executeProposals(proposalIds, targets, data);
 
