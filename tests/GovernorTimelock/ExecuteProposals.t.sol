@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { MockTarget } from "../mocks/Mocks.sol";
+
 import { GovernorTimelockTestBase } from "./GovernorTimelockBase.t.sol";
 
 contract ExecuteProposalsTests is GovernorTimelockTestBase {
@@ -45,14 +47,14 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
 
-        targets[0] = makeAddr("target1");
-        targets[1] = makeAddr("target2");
+        targets[0] = address(new MockTarget());
+        targets[1] = address(new MockTarget());
 
-        bytes4 functionToCall1 = bytes4(keccak256("randomFunction1"));
-        bytes4 functionToCall2 = bytes4(keccak256("randomFunction2"));
+        bytes4 functionToCall1 = bytes4(keccak256("randomFunction(bytes)"));
+        bytes4 functionToCall2 = bytes4(keccak256("randomFunction(bytes)"));
 
-        data[0] = abi.encodeWithSelector(functionToCall1, abi.encode(keccak256("randomParameters1")));
-        data[1] = abi.encodeWithSelector(functionToCall2, abi.encode(keccak256("randomParameters2")));
+        data[0] = abi.encodeWithSelector(functionToCall1, "randomParameters1");
+        data[1] = abi.encodeWithSelector(functionToCall2, "randomParameters2");
 
         ( uint32 delay, uint32 executionWindow ) = timelock.defaultTimelockParameters();
 
@@ -91,14 +93,14 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
 
-        targets[0] = makeAddr("target1");
-        targets[1] = makeAddr("target2");
+        targets[0] = address(new MockTarget());
+        targets[1] = address(new MockTarget());
 
-        bytes4 functionToCall1 = bytes4(keccak256("randomFunction1"));
-        bytes4 functionToCall2 = bytes4(keccak256("randomFunction2"));
+        bytes4 functionToCall1 = bytes4(keccak256("randomFunction(bytes)"));
+        bytes4 functionToCall2 = bytes4(keccak256("randomFunction(bytes)"));
 
-        data[0] = abi.encode(functionToCall1, keccak256("randomParameters1"));
-        data[1] = abi.encode(functionToCall2, keccak256("randomParameters2"));
+        data[0] = abi.encodeWithSelector(functionToCall1, "randomParameters1");
+        data[1] = abi.encodeWithSelector(functionToCall2, "randomParameters2");
 
         ( uint32 delay, ) = timelock.defaultTimelockParameters();
 
@@ -108,8 +110,9 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         vm.warp(block.timestamp + delay);
 
         uint256[] memory proposalIds = new uint256[](2);
-        proposalIds[0]               = 1;
-        proposalIds[1]               = 2;
+
+        proposalIds[0] = 1;
+        proposalIds[1] = 2;
 
         data[1] = abi.encode(keccak256("randomInvalidParameters"));
 
@@ -125,17 +128,14 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
 
-        targets[0] = makeAddr("target1");
-        targets[1] = makeAddr("target2");
+        targets[0] = address(new MockTarget());
+        targets[1] = address(new MockTarget());
 
-        bytes4 functionToCall1 = bytes4(keccak256("randomFunction1"));
-        bytes4 functionToCall2 = bytes4(keccak256("randomFunction2"));
+        bytes4 functionToCall1 = bytes4(keccak256("randomFunction(bytes)"));
+        bytes4 functionToCall2 = bytes4(keccak256("randomFunction(bytes)"));
 
-        bytes memory randomParameters1 = abi.encode(keccak256("randomParameters1"));
-        bytes memory randomParameters2 = abi.encode(keccak256("randomParameters2"));
-
-        data[0] = abi.encode(functionToCall1, randomParameters1);
-        data[1] = abi.encode(functionToCall2, randomParameters2);
+        data[0] = abi.encodeWithSelector(functionToCall1, "randomParameters1");
+        data[1] = abi.encodeWithSelector(functionToCall2, "randomParameters2");
 
         vm.prank(proposer);
         timelock.scheduleProposals(targets, data);
@@ -149,12 +149,12 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         proposalIds[0] = 1;
         proposalIds[1] = 2;
 
-        vm.mockCallRevert(targets[0], abi.encode(functionToCall1, randomParameters1), "UNDERLYING_MESSAGE");
+        vm.mockCallRevert(targets[0], data[0], "UNDERLYING_MESSAGE");
         vm.expectRevert("UNDERLYING_MESSAGE");
         vm.prank(executor);
         timelock.executeProposals(proposalIds, targets, data);
 
-        vm.mockCallRevert(targets[0], abi.encode(functionToCall1, randomParameters1), "");
+        vm.mockCallRevert(targets[0], data[0], "");
         vm.expectRevert("GT:EP:CALL_FAILED");
         vm.prank(executor);
         timelock.executeProposals(proposalIds, targets, data);
@@ -167,8 +167,8 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
 
-        targets[0] = makeAddr("target1");
-        targets[1] = makeAddr("target2");
+        targets[0] = address(new MockTarget());
+        targets[1] = address(new MockTarget());
 
         bytes4 functionToCall1 = bytes4(keccak256("randomFunction1"));
         bytes4 functionToCall2 = bytes4(keccak256("randomFunction2"));

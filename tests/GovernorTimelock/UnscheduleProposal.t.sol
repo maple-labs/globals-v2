@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.25;
 
+import { MockTarget } from "../mocks/Mocks.sol";
+
 import { GovernorTimelockTestBase } from "./GovernorTimelockBase.t.sol";
 
 contract UnscheduleProposalsTests is GovernorTimelockTestBase {
@@ -17,9 +19,9 @@ contract UnscheduleProposalsTests is GovernorTimelockTestBase {
     }
 
     function test_unscheduleProposals_revert_notUnschedulable() public {
-        bytes32[] memory roles    = new bytes32[](2);
-        address[] memory accounts = new address[](2);
-        bool[] memory shouldGrant = new bool[](2);
+        bytes32[] memory roles       = new bytes32[](2);
+        address[] memory accounts    = new address[](2);
+        bool[]    memory shouldGrant = new bool[](2);
 
         roles[0] = keccak256("randomRole1");
         roles[1] = keccak256("randomRole2");
@@ -54,14 +56,14 @@ contract UnscheduleProposalsTests is GovernorTimelockTestBase {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
 
-        targets[0] = makeAddr("target1");
-        targets[1] = makeAddr("target2");
+        targets[0] = address(new MockTarget());
+        targets[1] = address(new MockTarget());
 
-        bytes4 functionToCall1 = bytes4(keccak256("randomFunction1"));
-        bytes4 functionToCall2 = bytes4(keccak256("randomFunction2"));
+        bytes4 functionToCall1 = bytes4(keccak256("randomFunction(bytes)"));
+        bytes4 functionToCall2 = bytes4(keccak256("randomFunction(bytes)"));
 
-        data[0] = abi.encodeWithSelector(functionToCall1, keccak256("randomParameters1"));
-        data[1] = abi.encodeWithSelector(functionToCall2, keccak256("randomParameters2"));
+        data[0] = abi.encodeWithSelector(functionToCall1, "randomParameters1");
+        data[1] = abi.encodeWithSelector(functionToCall2, "randomParameters2");
 
         vm.prank(proposer);
         timelock.scheduleProposals(targets, data);
@@ -72,8 +74,9 @@ contract UnscheduleProposalsTests is GovernorTimelockTestBase {
         assertEq(timelock.latestProposalId(), 2);
 
         uint256[] memory proposalIds = new uint256[](2);
-        proposalIds[0]               = 1;
-        proposalIds[1]               = 2;
+
+        proposalIds[0] = 1;
+        proposalIds[1] = 2;
 
         vm.expectEmit();
         emit ProposalUnscheduled(1);

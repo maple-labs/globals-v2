@@ -112,7 +112,8 @@ contract GovernorTimelock is IGovernorTimelock {
         bytes4  functionSelector_,
         uint32  delay_,
         uint32  executionWindow_
-    ) external override onlySelf
+    )
+        external override onlySelf
     {
         require(delay_           >= MIN_DELAY,            "GT:SFTP:INVALID_DELAY");
         require(executionWindow_ >= MIN_EXECUTION_WINDOW, "GT:SFTP:INVALID_EXEC_WINDOW");
@@ -134,7 +135,8 @@ contract GovernorTimelock is IGovernorTimelock {
         bytes32[] calldata roles_,
         address[] calldata accounts_,
         bool[]    calldata shouldGrant_
-    ) external override onlyRole(ROLE_ADMIN)
+    )
+        external override onlyRole(ROLE_ADMIN)
     {
         require(roles_.length > 0,                    "GT:PRU:EMPTY_ARRAY");
         require(roles_.length == accounts_.length,    "GT:PRU:INVALID_ACCOUNTS_LENGTH");
@@ -153,7 +155,8 @@ contract GovernorTimelock is IGovernorTimelock {
         uint256[] calldata proposalIds_,
         address[] calldata targets_,
         bytes[]   calldata data_
-    ) external override onlyRole(EXECUTOR_ROLE)
+    )
+        external override onlyRole(EXECUTOR_ROLE)
     {
         require(proposalIds_.length != 0,               "GT:EP:EMPTY_ARRAY");
         require(proposalIds_.length == targets_.length, "GT:EP:INVALID_TARGETS_LENGTH");
@@ -163,9 +166,9 @@ contract GovernorTimelock is IGovernorTimelock {
             Proposal memory proposal_     = proposals[proposalIds_[i]];
             bytes32 expectedProposalHash_ = keccak256(abi.encode(targets_[i], data_[i]));
 
-            require(proposals[proposalIds_[i]].proposalHash != 0,    "GT:EP:PROPOSAL_NOT_FOUND");
-            require(isExecutable(proposalIds_[i]),                   "GT:EP:NOT_EXECUTABLE");
-            require(expectedProposalHash_ == proposal_.proposalHash, "GT:EP:INVALID_DATA");
+            require(proposals[proposalIds_[i]].proposalHash != bytes32(0), "GT:EP:PROPOSAL_NOT_FOUND");
+            require(isExecutable(proposalIds_[i]),                         "GT:EP:NOT_EXECUTABLE");
+            require(expectedProposalHash_ == proposal_.proposalHash,       "GT:EP:INVALID_DATA");
 
             _call(targets_[i], data_[i]);
 
@@ -231,7 +234,8 @@ contract GovernorTimelock is IGovernorTimelock {
 
     function _getTimelockParameters(
         address target_, bytes4 selector_, bytes memory parameters_
-    ) internal view returns (TimelockParameters memory timelockParameters_)
+    )
+        internal view returns (TimelockParameters memory timelockParameters_)
     {
         // Use prior timelock params if set when updating timelock params.
         if (target_ == address(this) && selector_ == this.setFunctionTimelockParameters.selector) {
@@ -257,6 +261,8 @@ contract GovernorTimelock is IGovernorTimelock {
     }
 
     function _scheduleProposal(address target_, bytes4 selector_, bytes memory parameters_) internal {
+        require(target_.code.length > 0, "GT:SP:EMPTY_ADDRESS");
+
         TimelockParameters memory timelockParameters_ = _getTimelockParameters(target_, selector_, parameters_);
 
         Proposal memory proposal_ = Proposal({

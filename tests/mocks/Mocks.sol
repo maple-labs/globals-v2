@@ -78,3 +78,9 @@ contract MockProxyFactory {
     }
 
 }
+
+contract MockTarget {
+
+    function randomFunction(bytes calldata params) external {}
+
+}

@@ -3,6 +3,8 @@ pragma solidity ^0.8.25;
 
 import { IGovernorTimelock } from "../../contracts/interfaces/IGovernorTimelock.sol";
 
+import { MockTarget } from "../mocks/Mocks.sol";
+
 import { GovernorTimelockTestBase } from "./GovernorTimelockBase.t.sol";
 
 contract ScheduleProposalsTests is GovernorTimelockTestBase {
@@ -28,13 +30,25 @@ contract ScheduleProposalsTests is GovernorTimelockTestBase {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
 
-        targets[0] = makeAddr("target");
+        targets[0] = address(new MockTarget());
         targets[1] = address(timelock);
 
-        data[0] = abi.encode(bytes4(keccak256("randomFunction")), keccak256("randomParameters"));
+        data[0] = abi.encodeWithSignature("randomFunction(bytes)", "randomParameters");
         data[1] = abi.encodeWithSelector(timelock.updateRole.selector, timelock.PROPOSER_ROLE(), proposer, true);
 
         vm.expectRevert("GT:SP:UPDATE_ROLE_NOT_ALLOWED");
+        vm.prank(proposer);
+        timelock.scheduleProposals(targets, data);
+    }
+
+    function test_scheduleProposals_revert_emptyTarget() public {
+        address[] memory targets = new address[](1);
+        bytes[]   memory data    = new bytes[](1);
+
+        targets[0] = address(1337);
+        data[0]    = abi.encodeWithSignature("randomFunction(bytes)", "randomParameters");
+
+        vm.expectRevert("GT:SP:EMPTY_ADDRESS");
         vm.prank(proposer);
         timelock.scheduleProposals(targets, data);
     }
@@ -43,14 +57,14 @@ contract ScheduleProposalsTests is GovernorTimelockTestBase {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
 
-        targets[0] = makeAddr("target1");
-        targets[1] = makeAddr("target2");
+        targets[0] = address(new MockTarget());
+        targets[1] = address(new MockTarget());
 
-        bytes4 functionToCall1 = bytes4(keccak256("randomFunction1"));
-        bytes4 functionToCall2 = bytes4(keccak256("randomFunction2"));
+        bytes4 functionToCall1 = bytes4(keccak256("randomFunction(bytes)"));
+        bytes4 functionToCall2 = bytes4(keccak256("randomFunction(bytes)"));
 
-        data[0] = abi.encodeWithSelector(functionToCall1, keccak256("randomParameters2"));
-        data[1] = abi.encodeWithSelector(functionToCall2, keccak256("randomParameters2"));
+        data[0] = abi.encodeWithSelector(functionToCall1, "randomParameters");
+        data[1] = abi.encodeWithSelector(functionToCall2, "randomParameters");
 
         uint32 secondFunctionDelay           = 2 days;
         uint32 secondFunctionExecutionWindow = 2 days;
