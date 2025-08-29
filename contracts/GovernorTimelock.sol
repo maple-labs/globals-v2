@@ -163,6 +163,7 @@ contract GovernorTimelock is IGovernorTimelock {
             Proposal memory proposal_     = proposals[proposalIds_[i]];
             bytes32 expectedProposalHash_ = keccak256(abi.encode(targets_[i], data_[i]));
 
+            require(proposals[proposalIds_[i]].proposalHash != 0,    "GT:EP:PROPOSAL_NOT_FOUND");
             require(isExecutable(proposalIds_[i]),                   "GT:EP:NOT_EXECUTABLE");
             require(expectedProposalHash_ == proposal_.proposalHash, "GT:EP:INVALID_DATA");
 

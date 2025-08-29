@@ -62,7 +62,8 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
         timelock.scheduleProposals(targets, data);
 
         uint256[] memory proposalIds = new uint256[](1);
-        proposalIds[0]               = 1;
+
+        proposalIds[0] = 1;
 
         vm.prank(canceler);
         timelock.unscheduleProposals(proposalIds);
@@ -70,7 +71,7 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
         vm.warp(block.timestamp + delay);
 
         vm.prank(executor);
-        vm.expectRevert("GT:EP:NOT_EXECUTABLE");
+        vm.expectRevert("GT:EP:PROPOSAL_NOT_FOUND");
         timelock.executeProposals(proposalIds, targets, data);
 
         _assertEmptyProposal(1);

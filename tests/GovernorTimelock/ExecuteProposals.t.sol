@@ -28,6 +28,19 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         timelock.executeProposals(new uint256[](1), new address[](1), new bytes[](2));
     }
 
+    function test_executeProposals_revert_notFound() public {
+        uint256[] memory proposalIds = new uint256[](2);
+        address[] memory targets     = new address[](2);
+        bytes[]   memory data        = new bytes[](2);
+
+        proposalIds[0] = 1;
+        proposalIds[1] = 2;
+
+        vm.expectRevert("GT:EP:PROPOSAL_NOT_FOUND");
+        vm.prank(executor);
+        timelock.executeProposals(proposalIds, targets, data);
+    }
+
     function test_executeProposals_revert_notExecutable() public {
         address[] memory targets = new address[](2);
         bytes[]   memory data    = new bytes[](2);
