@@ -170,9 +170,9 @@ contract GovernorTimelock is IGovernorTimelock {
             require(isExecutable(proposalIds_[i]),                         "GT:EP:NOT_EXECUTABLE");
             require(expectedProposalHash_ == proposal_.proposalHash,       "GT:EP:INVALID_DATA");
 
-            _call(targets_[i], data_[i]);
-
             delete proposals[proposalIds_[i]];
+
+            _call(targets_[i], data_[i]);
 
             emit ProposalExecuted(proposalIds_[i]);
         }
