@@ -115,8 +115,12 @@ contract GovernorTimelock is IGovernorTimelock {
     )
         external override onlySelf
     {
-        require(delay_           >= MIN_DELAY,            "GT:SFTP:INVALID_DELAY");
-        require(executionWindow_ >= MIN_EXECUTION_WINDOW, "GT:SFTP:INVALID_EXEC_WINDOW");
+         // Both delay_ & executionWindow_ must be zero to use defaults, or both must meet minimums.
+        require(
+            (delay_ == 0 && executionWindow_ == 0) ||
+            (delay_ >= MIN_DELAY && executionWindow_ >= MIN_EXECUTION_WINDOW),
+            "GT:SFTP:INVALID_PARAMETERS"
+        );
 
         functionTimelockParameters[target_][functionSelector_] = TimelockParameters({ delay: delay_, executionWindow: executionWindow_ });
 
@@ -223,7 +227,7 @@ contract GovernorTimelock is IGovernorTimelock {
         }
 
         if (returndata_.length > 0) {
-            assembly {
+            assembly ("memory-safe") {
                 let size_ := mload(returndata_)
                 revert(add(32, returndata_), size_)
             }
