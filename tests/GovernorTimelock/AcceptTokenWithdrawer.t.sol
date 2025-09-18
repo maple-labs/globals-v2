@@ -8,7 +8,7 @@ contract AcceptTokenWithdrawerTests is GovernorTimelockTestBase {
     function test_acceptTokenWithdrawer_revert_notPendingTokenWithdrawer() public {
         address pendingTokenWithdrawer = makeAddr("pendingTokenWithdrawer");
 
-        vm.prank(tokenWithdrawer);
+        vm.prank(roleAdmin);
         timelock.setPendingTokenWithdrawer(pendingTokenWithdrawer);
 
         vm.expectRevert("GT:ATW:NOT_AUTHORIZED");
@@ -18,7 +18,7 @@ contract AcceptTokenWithdrawerTests is GovernorTimelockTestBase {
     function test_acceptTokenWithdrawer_success() public {
         address pendingTokenWithdrawer = makeAddr("pendingTokenWithdrawer");
 
-        vm.prank(tokenWithdrawer);
+        vm.prank(roleAdmin);
         timelock.setPendingTokenWithdrawer(pendingTokenWithdrawer);
 
         vm.expectEmit();

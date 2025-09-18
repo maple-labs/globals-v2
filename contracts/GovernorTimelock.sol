@@ -79,9 +79,7 @@ contract GovernorTimelock is IGovernorTimelock {
         emit TokenWithdrawerAccepted(newTokenWithdrawer_);
     }
 
-    function setPendingTokenWithdrawer(address newPendingTokenWithdrawer_) external override {
-        require(msg.sender == tokenWithdrawer, "GT:SPTW:NOT_AUTHORIZED");
-
+    function setPendingTokenWithdrawer(address newPendingTokenWithdrawer_) external override onlyRole(ROLE_ADMIN) {
         pendingTokenWithdrawer = newPendingTokenWithdrawer_;
 
         emit PendingTokenWithdrawerSet(newPendingTokenWithdrawer_);
