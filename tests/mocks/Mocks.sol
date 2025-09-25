@@ -31,6 +31,22 @@ contract MockChainlinkOracle {
 
 }
 
+contract MockERC20 {
+
+    mapping(address => uint256) public balanceOf;
+
+    function mint(address to_, uint256 amount_) external {
+        balanceOf[to_] += amount_;
+    }
+
+    function transfer(address to_, uint256 amount_) external returns (bool success_) {
+        balanceOf[msg.sender] -= amount_;
+        balanceOf[to_] += amount_;
+        return true;
+    }
+
+}
+
 contract MockPoolManager {
 
     address public factory;
@@ -60,5 +76,11 @@ contract MockProxyFactory {
     function __setIsInstance(bool isInstance_) external {
         _isInstance = isInstance_;
     }
+
+}
+
+contract MockTarget {
+
+    function randomFunction(bytes calldata params) external {}
 
 }

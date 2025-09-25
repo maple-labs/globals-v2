@@ -4,3 +4,6 @@
 [submodule "modules/forge-std"]
 	path = modules/forge-std
 	url = git@github.com:foundry-rs/forge-std.git
+[submodule "modules/erc20-helper"]
+	path = modules/erc20-helper
+	url = https://github.com/maple-labs/erc20-helper
