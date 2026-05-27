@@ -92,6 +92,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     address public override operationalAdmin;
 
+    mapping(bytes32 => mapping(address => bool)) public override isGovernedInstanceOf;
+
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
     /**************************************************************************************************************************************/
@@ -265,6 +267,20 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         require(!isPoolDeployer_, "MG:SVPD:ONLY_DISABLING");
 
         emit ValidPoolDeployerSet(account_, _isPoolDeployer[account_] = isPoolDeployer_);
+    }
+
+    function setValidGovernedInstanceOf(bytes32 roleKey_, address account_) external override onlyGovernor {
+        require(!isGovernedInstanceOf[roleKey_][account_], "MG:SVGIO:ALREADY_SET");
+
+        isGovernedInstanceOf[roleKey_][account_] = true;
+        emit ValidGovernedInstanceSet(msg.sender, roleKey_, account_, true);
+    }
+
+    function unsetValidGovernedInstanceOf(bytes32 roleKey_, address account_) external override onlyGovernorOrOperationalAdmin {
+        require(isGovernedInstanceOf[roleKey_][account_], "MG:UVGIO:ALREADY_UNSET");
+
+        isGovernedInstanceOf[roleKey_][account_] = false;
+        emit ValidGovernedInstanceSet(msg.sender, roleKey_, account_, false);
     }
 
     /**************************************************************************************************************************************/

@@ -4,6 +4,8 @@ pragma solidity ^0.8.7;
 import { Test }                from "../modules/forge-std/src/Test.sol";
 import { NonTransparentProxy } from "../modules/non-transparent-proxy/contracts/NonTransparentProxy.sol";
 
+import { IMapleGlobals } from "../contracts/interfaces/IMapleGlobals.sol";
+
 import { MapleGlobals } from "../contracts/MapleGlobals.sol";
 
 import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/Mocks.sol";
@@ -14,6 +16,8 @@ import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/
 // - isPoolDeployer
 
 contract BaseMapleGlobalsTest is Test {
+
+    bytes32 internal constant TRADING_ADDRESS_KEY = "TRADING_ADDRESS";
 
     address internal GOVERNOR          = makeAddr("GOVERNOR");
     address internal OPERATIONAL_ADMIN = makeAddr("OPERATIONAL_ADMIN");
@@ -710,6 +714,90 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
         globals.setValidPoolDelegate(SET_ADDRESS, true);
 
         assertTrue(globals.isPoolDelegate(SET_ADDRESS));
+    }
+
+}
+
+contract SetValidGovernedInstanceOfTests is BaseMapleGlobalsTest {
+
+    function test_setValidGovernedInstanceOf_notGovernor() external {
+        vm.expectRevert("MG:NOT_GOV");
+        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+    }
+
+    function test_setValidGovernedInstanceOf_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        vm.prank(OPERATIONAL_ADMIN);
+        vm.expectRevert("MG:NOT_GOV");
+        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+    }
+
+    function test_setValidGovernedInstanceOf_noOp() external {
+        vm.startPrank(GOVERNOR);
+        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+
+        vm.expectRevert("MG:SVGIO:ALREADY_SET");
+        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+    }
+
+    function test_setValidGovernedInstanceOf_success() external {
+        assertFalse(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+
+        vm.expectEmit();
+        emit IMapleGlobals.ValidGovernedInstanceSet(GOVERNOR, TRADING_ADDRESS_KEY, SET_ADDRESS, true);
+
+        vm.prank(GOVERNOR);
+        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+
+        assertTrue(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+    }
+
+}
+
+contract UnsetValidGovernedInstanceOfTests is BaseMapleGlobalsTest {
+
+    function test_unsetValidGovernedInstanceOf_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
+        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+    }
+
+    function test_unsetValidGovernedInstanceOf_alreadyUnset() external {
+        vm.prank(GOVERNOR);
+        vm.expectRevert("MG:UVGIO:ALREADY_UNSET");
+        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+    }
+
+    function test_unsetValidGovernedInstanceOf_success_governor() external {
+        vm.startPrank(GOVERNOR);
+        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+
+        assertTrue(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+
+        vm.expectEmit();
+        emit IMapleGlobals.ValidGovernedInstanceSet(GOVERNOR, TRADING_ADDRESS_KEY, SET_ADDRESS, false);
+
+        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+
+        assertFalse(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+    }
+
+    function test_unsetValidGovernedInstanceOf_success_operationalAdmin() external {
+        vm.startPrank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+        vm.stopPrank();
+
+        assertTrue(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+
+        vm.expectEmit();
+        emit IMapleGlobals.ValidGovernedInstanceSet(OPERATIONAL_ADMIN, TRADING_ADDRESS_KEY, SET_ADDRESS, false);
+
+        vm.prank(OPERATIONAL_ADMIN);
+        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+
+        assertFalse(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
     }
 
 }
