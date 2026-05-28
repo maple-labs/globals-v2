@@ -196,6 +196,18 @@ interface IMapleGlobals is INonTransparentProxied {
     event SecurityAdminSet(address indexed previousSecurityAdmin_, address indexed currentSecurityAdmin_);
 
     /**
+     *  @dev   The ownership of the strategy manager was transferred.
+     *  @param fromStrategyDelegate_ The address of the previous strategy delegate.
+     *  @param toStrategyDelegate_   The address of the new strategy delegate.
+     *  @param strategyManager_      The address of the strategy manager.
+     */
+    event StrategyManagerOwnershipTransferred(
+        address indexed fromStrategyDelegate_,
+        address indexed toStrategyDelegate_,
+        address indexed strategyManager_
+    );
+
+    /**
      *  @dev   A new timelock window was set.
      *  @param contract_   The contract to execute the call on.
      *  @param functionId_ The id of the function to execute.
@@ -804,6 +816,13 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param toPoolDelegate_   The address of the pool delegate to transfer ownership to.
      */
     function transferOwnedPoolManager(address fromPoolDelegate_, address toPoolDelegate_) external;
+
+    /**
+     *  @dev   Transfer the ownership of the strategy manager.
+     *  @param fromStrategyDelegate_ The address of the strategy delegate to transfer ownership from.
+     *  @param toStrategyDelegate_   The address of the strategy delegate to transfer ownership to.
+     */
+    function transferOwnedStrategyManager(address fromStrategyDelegate_, address toStrategyDelegate_) external;
 
     /**************************************************************************************************************************************/
     /*** Schedule Functions                                                                                                             ***/

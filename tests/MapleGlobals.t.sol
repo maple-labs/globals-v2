@@ -18,6 +18,10 @@ import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/
 // TODO: Temporary harness. Remove once ownedStrategyManager is set through setter functionality in a follow-up ticket.
 contract MapleGlobalsHarness is MapleGlobals {
 
+    function __setIsStrategyDelegate(address account_, bool isStrategyDelegate_) external {
+        strategyDelegates[account_].isStrategyDelegate = isStrategyDelegate_;
+    }
+
     function __setOwnedStrategyManager(address account_, address strategyManager_) external {
         strategyDelegates[account_].ownedStrategyManager = strategyManager_;
     }
@@ -1344,6 +1348,74 @@ contract TransferOwnedPoolTests is BaseMapleGlobalsTest {
 
         assertEq(ownedPoolManager1, address(0));
         assertEq(ownedPoolManager2, address(manager));
+    }
+
+}
+
+contract TransferOwnedStrategyManagerTests is BaseMapleGlobalsTest {
+
+    address STRATEGY_DELEGATE_1 = makeAddr("STRATEGY_DELEGATE_1");
+    address STRATEGY_DELEGATE_2 = makeAddr("STRATEGY_DELEGATE_2");
+    address STRATEGY_MANAGER_1  = makeAddr("STRATEGY_MANAGER_1");
+    address STRATEGY_MANAGER_2  = makeAddr("STRATEGY_MANAGER_2");
+
+    function setUp() public override {
+        super.setUp();
+
+        MapleGlobalsHarness(address(globals)).__setOwnedStrategyManager(STRATEGY_DELEGATE_1, STRATEGY_MANAGER_1);
+        MapleGlobalsHarness(address(globals)).__setIsStrategyDelegate(STRATEGY_DELEGATE_1, true);
+    }
+
+    function test_transferOwnedStrategyManager_notStrategyManager() external {
+        vm.expectRevert("MG:TOSM:NOT_AUTHORIZED");
+        globals.transferOwnedStrategyManager(STRATEGY_DELEGATE_1, STRATEGY_DELEGATE_2);
+    }
+
+    function test_transferOwnedStrategyManager_notStrategyDelegate() external {
+        vm.prank(STRATEGY_MANAGER_1);
+        vm.expectRevert("MG:TOSM:NOT_STRATEGY_DELEGATE");
+        globals.transferOwnedStrategyManager(STRATEGY_DELEGATE_1, STRATEGY_DELEGATE_2);
+    }
+
+    function test_transferOwnedStrategyManager_alreadyOwned() external {
+        MapleGlobalsHarness(address(globals)).__setIsStrategyDelegate(STRATEGY_DELEGATE_2, true);
+        MapleGlobalsHarness(address(globals)).__setOwnedStrategyManager(STRATEGY_DELEGATE_2, STRATEGY_MANAGER_2);
+
+        vm.prank(STRATEGY_MANAGER_1);
+        vm.expectRevert("MG:TOSM:ALREADY_SET");
+        globals.transferOwnedStrategyManager(STRATEGY_DELEGATE_1, STRATEGY_DELEGATE_2);
+    }
+
+    function test_transferOwnedStrategyManager_sameFromAndToDelegate() external {
+        vm.prank(STRATEGY_MANAGER_1);
+        vm.expectRevert("MG:TOSM:ALREADY_SET");
+        globals.transferOwnedStrategyManager(STRATEGY_DELEGATE_1, STRATEGY_DELEGATE_1);
+    }
+
+    function test_transferOwnedStrategyManager_success() external {
+        ( address ownedStrategyManager1, bool isStrategyDelegate1 ) = globals.strategyDelegates(STRATEGY_DELEGATE_1);
+        ( address ownedStrategyManager2, bool isStrategyDelegate2 ) = globals.strategyDelegates(STRATEGY_DELEGATE_2);
+
+        assertEq(ownedStrategyManager1, STRATEGY_MANAGER_1);
+        assertEq(ownedStrategyManager2, address(0));
+        assertEq(isStrategyDelegate1,   true);
+        assertEq(isStrategyDelegate2,   false);
+
+        MapleGlobalsHarness(address(globals)).__setIsStrategyDelegate(STRATEGY_DELEGATE_2, true);
+
+        vm.expectEmit(address(globals));
+        emit IMapleGlobals.StrategyManagerOwnershipTransferred(STRATEGY_DELEGATE_1, STRATEGY_DELEGATE_2, STRATEGY_MANAGER_1);
+
+        vm.prank(STRATEGY_MANAGER_1);
+        globals.transferOwnedStrategyManager(STRATEGY_DELEGATE_1, STRATEGY_DELEGATE_2);
+
+        ( ownedStrategyManager1, isStrategyDelegate1 ) = globals.strategyDelegates(STRATEGY_DELEGATE_1);
+        ( ownedStrategyManager2, isStrategyDelegate2 ) = globals.strategyDelegates(STRATEGY_DELEGATE_2);
+
+        assertEq(ownedStrategyManager1, address(0));
+        assertEq(ownedStrategyManager2, STRATEGY_MANAGER_1);
+        assertEq(isStrategyDelegate1,   true);
+        assertEq(isStrategyDelegate2,   true);
     }
 
 }

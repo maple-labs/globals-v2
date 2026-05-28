@@ -401,6 +401,20 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit PoolManagerOwnershipTransferred(fromPoolDelegate_, toPoolDelegate_, msg.sender);
     }
 
+    function transferOwnedStrategyManager(address fromStrategyDelegate_, address toStrategyDelegate_) external override {
+        StrategyDelegate storage fromDelegate_ = strategyDelegates[fromStrategyDelegate_];
+        StrategyDelegate storage toDelegate_   = strategyDelegates[toStrategyDelegate_];
+
+        require(fromDelegate_.ownedStrategyManager == msg.sender, "MG:TOSM:NOT_AUTHORIZED");
+        require(toDelegate_.isStrategyDelegate,                   "MG:TOSM:NOT_STRATEGY_DELEGATE");
+        require(toDelegate_.ownedStrategyManager == address(0),   "MG:TOSM:ALREADY_SET");
+
+        fromDelegate_.ownedStrategyManager = address(0);
+        toDelegate_.ownedStrategyManager   = msg.sender;
+
+        emit StrategyManagerOwnershipTransferred(fromStrategyDelegate_, toStrategyDelegate_, msg.sender);
+    }
+
     /**************************************************************************************************************************************/
     /*** Schedule Functions                                                                                                             ***/
     /**************************************************************************************************************************************/
