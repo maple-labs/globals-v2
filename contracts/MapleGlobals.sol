@@ -29,6 +29,11 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         bool    isPoolDelegate;
     }
 
+    struct StrategyDelegate {
+        address ownedStrategyManager;
+        bool    isStrategyDelegate;
+    }
+
     struct ScheduledCall {
         uint256 timestamp;
         bytes32 dataHash;
@@ -93,6 +98,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     address public override operationalAdmin;
 
     mapping(bytes32 => mapping(address => bool)) public override isGovernedInstanceOf;
+
+    mapping(address => StrategyDelegate) public override strategyDelegates;
 
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
@@ -281,6 +288,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
         isGovernedInstanceOf[roleKey_][account_] = false;
         emit ValidGovernedInstanceSet(msg.sender, roleKey_, account_, false);
+    }
+
+    function setValidStrategyDelegate(address account_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
+        require(account_ != address(0), "MG:SVSD:ZERO_ADDR");
+
+        require(isValid_ || strategyDelegates[account_].ownedStrategyManager == address(0), "MG:SVSD:OWNS_STRATEGY_MANAGER");
+
+        strategyDelegates[account_].isStrategyDelegate = isValid_;
+        emit ValidStrategyDelegateSet(account_, isValid_);
     }
 
     /**************************************************************************************************************************************/
@@ -526,8 +542,16 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         isPoolDeployer_ = canDeploy(caller_);
     }
 
+    function isStrategyDelegate(address account_) external view override returns (bool isStrategyDelegate_) {
+        isStrategyDelegate_ = strategyDelegates[account_].isStrategyDelegate;
+    }
+
     function ownedPoolManager(address account_) external view override returns (address poolManager_) {
         poolManager_ = poolDelegates[account_].ownedPoolManager;
+    }
+
+    function ownedStrategyManager(address account_) external view override returns (address strategyManager_) {
+        strategyManager_ = strategyDelegates[account_].ownedStrategyManager;
     }
 
     /**************************************************************************************************************************************/

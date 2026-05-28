@@ -15,6 +15,15 @@ import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/
 // - canDeploy/canDeployFrom
 // - isPoolDeployer
 
+// TODO: Temporary harness. Remove once ownedStrategyManager is set through setter functionality in a follow-up ticket.
+contract MapleGlobalsHarness is MapleGlobals {
+
+    function __setOwnedStrategyManager(address account_, address strategyManager_) external {
+        strategyDelegates[account_].ownedStrategyManager = strategyManager_;
+    }
+
+}
+
 contract BaseMapleGlobalsTest is Test {
 
     bytes32 internal constant TRADING_ADDRESS_KEY = "TRADING_ADDRESS";
@@ -30,7 +39,7 @@ contract BaseMapleGlobalsTest is Test {
     MapleGlobals internal globals;
 
     function setUp() public virtual {
-        implementation = address(new MapleGlobals());
+        implementation = address(new MapleGlobalsHarness());
         globals        = MapleGlobals(address(new NonTransparentProxy(GOVERNOR, address(implementation))));
     }
 
@@ -714,6 +723,106 @@ contract SetValidPoolDelegate is BaseMapleGlobalsTest {
         globals.setValidPoolDelegate(SET_ADDRESS, true);
 
         assertTrue(globals.isPoolDelegate(SET_ADDRESS));
+    }
+
+}
+
+contract SetValidStrategyDelegateTests is BaseMapleGlobalsTest {
+
+    address STRATEGY_DELEGATE = makeAddr("STRATEGY_DELEGATE");
+
+    event ValidStrategyDelegateSet(address indexed account_, bool isValid_);
+
+    function test_setValidStrategyDelegate_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
+        globals.setValidStrategyDelegate(STRATEGY_DELEGATE, true);
+
+        vm.prank(GOVERNOR);
+        globals.setValidStrategyDelegate(STRATEGY_DELEGATE, true);
+    }
+
+    function test_setValidStrategyDelegate_zeroAddress() external {
+        vm.expectRevert("MG:SVSD:ZERO_ADDR");
+        vm.prank(GOVERNOR);
+        globals.setValidStrategyDelegate(address(0), true);
+    }
+
+    function test_setValidStrategyDelegate_ownsStrategyManager() external {
+        address strategyManager = makeAddr("STRATEGY_MANAGER");
+
+        // TODO: Remove the harness call once we implement the appropriate setter in a follow-up ticket.
+        MapleGlobalsHarness(address(globals)).__setOwnedStrategyManager(STRATEGY_DELEGATE, strategyManager);
+
+        assertEq(globals.ownedStrategyManager(STRATEGY_DELEGATE), strategyManager);
+
+        vm.expectRevert("MG:SVSD:OWNS_STRATEGY_MANAGER");
+        vm.prank(GOVERNOR);
+        globals.setValidStrategyDelegate(STRATEGY_DELEGATE, false);
+    }
+
+    function test_setValidStrategyDelegate_success_governor() external {
+        vm.startPrank(GOVERNOR);
+
+        ( address ownedStrategyManager_, bool isStrategyDelegate_ ) = globals.strategyDelegates(STRATEGY_DELEGATE);
+
+        assertEq(ownedStrategyManager_,                           address(0));
+        assertEq(globals.ownedStrategyManager(STRATEGY_DELEGATE), address(0));
+
+        assertFalse(isStrategyDelegate_);
+        assertFalse(globals.isStrategyDelegate(STRATEGY_DELEGATE));
+
+        vm.expectEmit(address(globals));
+        emit ValidStrategyDelegateSet(STRATEGY_DELEGATE, true);
+
+        globals.setValidStrategyDelegate(STRATEGY_DELEGATE, true);
+
+        ( ownedStrategyManager_, isStrategyDelegate_ ) = globals.strategyDelegates(STRATEGY_DELEGATE);
+
+        assertEq(ownedStrategyManager_,                           address(0));
+        assertEq(globals.ownedStrategyManager(STRATEGY_DELEGATE), address(0));
+
+        assertTrue(isStrategyDelegate_);
+        assertTrue(globals.isStrategyDelegate(STRATEGY_DELEGATE));
+
+        vm.expectEmit(address(globals));
+        emit ValidStrategyDelegateSet(STRATEGY_DELEGATE, false);
+
+        globals.setValidStrategyDelegate(STRATEGY_DELEGATE, false);
+
+        ( ownedStrategyManager_, isStrategyDelegate_ ) = globals.strategyDelegates(STRATEGY_DELEGATE);
+
+        assertEq(ownedStrategyManager_,                           address(0));
+        assertEq(globals.ownedStrategyManager(STRATEGY_DELEGATE), address(0));
+
+        assertFalse(isStrategyDelegate_);
+        assertFalse(globals.isStrategyDelegate(STRATEGY_DELEGATE));
+    }
+
+    function test_setValidStrategyDelegate_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+
+        ( address ownedStrategyManager_, bool isStrategyDelegate_ ) = globals.strategyDelegates(STRATEGY_DELEGATE);
+
+        assertEq(ownedStrategyManager_,                           address(0));
+        assertEq(globals.ownedStrategyManager(STRATEGY_DELEGATE), address(0));
+
+        assertFalse(isStrategyDelegate_);
+        assertFalse(globals.isStrategyDelegate(STRATEGY_DELEGATE));
+
+        vm.expectEmit(address(globals));
+        emit ValidStrategyDelegateSet(STRATEGY_DELEGATE, true);
+
+        vm.prank(OPERATIONAL_ADMIN);
+        globals.setValidStrategyDelegate(STRATEGY_DELEGATE, true);
+
+        ( ownedStrategyManager_, isStrategyDelegate_ ) = globals.strategyDelegates(STRATEGY_DELEGATE);
+
+        assertEq(ownedStrategyManager_,                           address(0));
+        assertEq(globals.ownedStrategyManager(STRATEGY_DELEGATE), address(0));
+
+        assertTrue(isStrategyDelegate_);
+        assertTrue(globals.isStrategyDelegate(STRATEGY_DELEGATE));
     }
 
 }
