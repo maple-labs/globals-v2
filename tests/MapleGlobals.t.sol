@@ -8,7 +8,12 @@ import { IMapleGlobals } from "../contracts/interfaces/IMapleGlobals.sol";
 
 import { MapleGlobals } from "../contracts/MapleGlobals.sol";
 
-import { MockChainlinkOracle, MockPoolManager, MockProxyFactory } from "./mocks/Mocks.sol";
+import {
+    MockChainlinkOracle,
+    MockProxyFactory,
+    MockPoolManager,
+    MockStrategyManager
+} from "./mocks/Mocks.sol";
 
 // TODO: Add tests for:
 // - __isPoolDeployer harnessed view function
@@ -182,6 +187,97 @@ contract ActivatePoolManagerTests is BaseMapleGlobalsTest {
         globals.activatePoolManager(address(manager));
 
         assertEq(globals.ownedPoolManager(admin), address(manager));
+    }
+
+}
+
+contract ActivateStrategyManagerTests is BaseMapleGlobalsTest {
+
+    address internal admin = makeAddr("admin");
+
+    MockStrategyManager internal manager = new MockStrategyManager(admin);
+    MockProxyFactory    internal factory = new MockProxyFactory();
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.startPrank(GOVERNOR);
+        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
+        globals.setValidInstanceOf("STRATEGY_MANAGER_FACTORY", address(factory), true);
+        globals.setValidStrategyDelegate(admin, true);
+        vm.stopPrank();
+
+        factory.__setIsInstance(true);
+        manager.__setFactory(address(factory));
+    }
+
+    function test_activateStrategyManager_notAuthorized() external {
+        vm.expectRevert("MG:NOT_GOV_OR_OA");
+        globals.activateStrategyManager(address(manager));
+    }
+
+    function test_activateStrategyManager_invalidFactory() external {
+        vm.startPrank(GOVERNOR);
+
+        globals.setValidInstanceOf("STRATEGY_MANAGER_FACTORY", address(factory), false);
+
+        vm.expectRevert("MG:ASM:INVALID_FACTORY");
+        globals.activateStrategyManager(address(manager));
+    }
+
+    function test_activateStrategyManager_invalidInstance() external {
+        vm.startPrank(GOVERNOR);
+
+        factory.__setIsInstance(false);
+
+        vm.expectRevert("MG:ASM:INVALID_STRATEGY_MANAGER");
+        globals.activateStrategyManager(address(manager));
+    }
+
+    function test_activateStrategyManager_invalidDelegate() external {
+        vm.startPrank(GOVERNOR);
+
+        globals.setValidStrategyDelegate(admin, false);
+
+        vm.expectRevert("MG:ASM:INVALID_DELEGATE");
+        globals.activateStrategyManager(address(manager));
+    }
+
+    function test_activateStrategyManager_alreadySet() external {
+        vm.prank(GOVERNOR);
+        globals.activateStrategyManager(address(manager));
+
+        vm.prank(GOVERNOR);
+        vm.expectRevert("MG:ASM:ALREADY_SET");
+        globals.activateStrategyManager(address(manager));
+    }
+
+    function test_activateStrategyManager_success_governor() external {
+        assertEq(globals.ownedStrategyManager(admin), address(0));
+        assertEq(manager.active(),                    false);
+
+        vm.expectEmit(address(globals));
+        emit IMapleGlobals.StrategyManagerActivated(address(manager), admin);
+
+        vm.prank(GOVERNOR);
+        globals.activateStrategyManager(address(manager));
+
+        assertEq(globals.ownedStrategyManager(admin), address(manager));
+        assertEq(manager.active(),                    true);
+    }
+
+    function test_activateStrategyManager_success_operationalAdmin() external {
+        assertEq(globals.ownedStrategyManager(admin), address(0));
+        assertEq(manager.active(),                    false);
+
+        vm.expectEmit(address(globals));
+        emit IMapleGlobals.StrategyManagerActivated(address(manager), admin);
+
+        vm.prank(OPERATIONAL_ADMIN);
+        globals.activateStrategyManager(address(manager));
+
+        assertEq(globals.ownedStrategyManager(admin), address(manager));
+        assertEq(manager.active(),                    true);
     }
 
 }

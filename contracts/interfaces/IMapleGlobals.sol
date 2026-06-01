@@ -196,6 +196,13 @@ interface IMapleGlobals is INonTransparentProxied {
     event SecurityAdminSet(address indexed previousSecurityAdmin_, address indexed currentSecurityAdmin_);
 
     /**
+     *  @dev   The strategy manager was activated.
+     *  @param strategyManager_  The address of the strategy manager.
+     *  @param strategyDelegate_ The address of the strategy delegate.
+     */
+    event StrategyManagerActivated(address indexed strategyManager_, address indexed strategyDelegate_);
+
+    /**
      *  @dev   The ownership of the strategy manager was transferred.
      *  @param fromStrategyDelegate_ The address of the previous strategy delegate.
      *  @param toStrategyDelegate_   The address of the new strategy delegate.
@@ -580,6 +587,12 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param poolManager_ The address of the pool manager to activate.
      */
     function activatePoolManager(address poolManager_) external;
+
+    /**
+     *  @dev   Activates the strategy manager.
+     *  @param strategyManager_ The address of the strategy manager to activate.
+     */
+    function activateStrategyManager(address strategyManager_) external;
 
     /**
      *  @dev   Sets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`

@@ -64,6 +64,27 @@ contract MockPoolManager {
 
 }
 
+contract MockStrategyManager {
+
+    bool public active;
+
+    address public factory;
+    address public strategyDelegate;
+
+    constructor(address strategyDelegate_) {
+        strategyDelegate = strategyDelegate_;
+    }
+
+    function setActive(bool active_) external {
+        active = active_;
+    }
+
+    function __setFactory(address factory_) external {
+        factory = factory_;
+    }
+
+}
+
 contract MockProxyFactory {
 
     bool _isInstance;

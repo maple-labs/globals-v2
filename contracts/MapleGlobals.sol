@@ -5,7 +5,13 @@ import { NonTransparentProxied } from "../modules/non-transparent-proxy/contract
 
 import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
 
-import { IChainlinkAggregatorV3Like, IPoolManagerLike, IProxyLike, IProxyFactoryLike } from "./interfaces/Interfaces.sol";
+import {
+    IChainlinkAggregatorV3Like,
+    IProxyFactoryLike,
+    IProxyLike,
+    IPoolManagerLike,
+    IStrategyManagerLike
+} from "./interfaces/Interfaces.sol";
 
 /*
 
@@ -154,6 +160,22 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         poolDelegates[delegate_].ownedPoolManager = poolManager_;
 
         IPoolManagerLike(poolManager_).setActive(true);
+    }
+
+    function activateStrategyManager(address strategyManager_) external override onlyGovernorOrOperationalAdmin {
+        address factory_  = IStrategyManagerLike(strategyManager_).factory();
+        address delegate_ = IStrategyManagerLike(strategyManager_).strategyDelegate();
+
+        require(isInstanceOf["STRATEGY_MANAGER_FACTORY"][factory_],              "MG:ASM:INVALID_FACTORY");
+        require(IProxyFactoryLike(factory_).isInstance(strategyManager_),        "MG:ASM:INVALID_STRATEGY_MANAGER");
+        require(strategyDelegates[delegate_].isStrategyDelegate,                 "MG:ASM:INVALID_DELEGATE");
+        require(strategyDelegates[delegate_].ownedStrategyManager == address(0), "MG:ASM:ALREADY_SET");
+
+        strategyDelegates[delegate_].ownedStrategyManager = strategyManager_;
+
+        IStrategyManagerLike(strategyManager_).setActive(true);
+
+        emit StrategyManagerActivated(strategyManager_, delegate_);
     }
 
     function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernorOrOperationalAdmin {
