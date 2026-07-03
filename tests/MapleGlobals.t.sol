@@ -252,6 +252,19 @@ contract ActivateStrategyManagerTests is BaseMapleGlobalsTest {
         globals.activateStrategyManager(address(manager));
     }
 
+    function test_activateStrategyManager_strategyDelegateAlreadyTaken() external {
+        MockStrategyManager otherManager = new MockStrategyManager(admin);
+
+        otherManager.__setFactory(address(factory));
+
+        vm.prank(GOVERNOR);
+        globals.activateStrategyManager(address(manager));
+
+        vm.prank(GOVERNOR);
+        vm.expectRevert("MG:ASM:ALREADY_SET");
+        globals.activateStrategyManager(address(otherManager));
+    }
+
     function test_activateStrategyManager_success_governor() external {
         assertEq(globals.ownedStrategyManager(admin), address(0));
         assertEq(manager.active(),                    false);
