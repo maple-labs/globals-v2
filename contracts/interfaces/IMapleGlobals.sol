@@ -267,15 +267,6 @@ interface IMapleGlobals is INonTransparentProxied {
     event ValidPoolDeployerSet(address indexed poolDeployer_, bool isValid_);
 
     /**
-     *  @dev   A governed instance was set.
-     *  @param caller_  The address that set the governed instance validity.
-     *  @param roleKey_ The key of the governed instance role.
-     *  @param account_ The address of the governed instance.
-     *  @param isValid_ The validity of the governed instance.
-     */
-    event ValidGovernedInstanceSet(address indexed caller_, bytes32 indexed roleKey_, address indexed account_, bool isValid_);
-
-    /**
      *  @dev   A valid strategy delegate was set.
      *  @param account_ The address of the account.
      *  @param isValid_ The validity of the strategy delegate.
@@ -379,14 +370,6 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return isFunctionUnpaused_ Whether the contract's function is uniquely unpaused.
      */
     function isFunctionUnpaused(address contract_, bytes4 sig_) external view returns (bool isFunctionUnpaused_);
-
-    /**
-     *  @dev    Gets whether an address is governed for the given role key.
-     *  @param  roleKey_              The key of the governed instance role.
-     *  @param  account_              The address of the governed instance.
-     *  @return isGovernedInstanceOf_ A boolean indicating whether the account is governed for the role key.
-     */
-    function isGovernedInstanceOf(bytes32 roleKey_, address account_) external view returns (bool isGovernedInstanceOf_);
 
     /**
      *  @dev    Gets wether an instance is of some instance key.
@@ -701,6 +684,13 @@ interface IMapleGlobals is INonTransparentProxied {
     function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external;
 
     /**
+     *  @dev   Sets the validity of a Maple managed wallet.
+     *  @param wallet_  The address of the Maple managed wallet.
+     *  @param isValid_ A boolean indicating the validity of the Maple managed wallet.
+     */
+    function setValidMapleManagedWallet(address wallet_, bool isValid_) external;
+
+    /**
      *  @dev   Sets the validity of the pool asset.
      *  @param poolAsset_ The address of the pool asset to set the validity for.
      *  @param isValid_   A boolean indicating the validity of the pool asset.
@@ -720,20 +710,6 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param isPoolDeployer_ A boolean indicating the validity of the pool deployer.
      */
     function setValidPoolDeployer(address account_, bool isPoolDeployer_) external;
-
-    /**
-     *  @dev   Sets the validity of a governed instance.
-     *  @param roleKey_ The key of the governed instance role.
-     *  @param account_ The address of the governed instance.
-     */
-    function setValidGovernedInstanceOf(bytes32 roleKey_, address account_) external;
-
-    /**
-     *  @dev   Unsets the validity of a governed instance.
-     *  @param roleKey_ The key of the governed instance role.
-     *  @param account_ The address of the governed instance.
-     */
-    function unsetValidGovernedInstanceOf(bytes32 roleKey_, address account_) external;
 
     /**
      *  @dev   Sets the validity of the strategy delegate.

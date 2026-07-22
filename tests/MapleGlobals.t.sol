@@ -35,8 +35,6 @@ contract MapleGlobalsHarness is MapleGlobals {
 
 contract BaseMapleGlobalsTest is Test {
 
-    bytes32 internal constant TRADING_ADDRESS_KEY = "TRADING_ADDRESS";
-
     address internal GOVERNOR          = makeAddr("GOVERNOR");
     address internal OPERATIONAL_ADMIN = makeAddr("OPERATIONAL_ADMIN");
     address internal SET_ADDRESS       = makeAddr("SET_ADDRESS");
@@ -940,86 +938,49 @@ contract SetValidStrategyDelegateTests is BaseMapleGlobalsTest {
 
 }
 
-contract SetValidGovernedInstanceOfTests is BaseMapleGlobalsTest {
+contract SetValidMapleManagedWalletTests is BaseMapleGlobalsTest {
 
-    function test_setValidGovernedInstanceOf_notGovernor() external {
-        vm.expectRevert("MG:NOT_GOV");
-        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-    }
-
-    function test_setValidGovernedInstanceOf_operationalAdmin() external {
-        vm.prank(GOVERNOR);
-        globals.setOperationalAdmin(OPERATIONAL_ADMIN);
-
-        vm.prank(OPERATIONAL_ADMIN);
-        vm.expectRevert("MG:NOT_GOV");
-        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-    }
-
-    function test_setValidGovernedInstanceOf_noOp() external {
-        vm.startPrank(GOVERNOR);
-        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-
-        vm.expectRevert("MG:SVGIO:ALREADY_SET");
-        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-    }
-
-    function test_setValidGovernedInstanceOf_success() external {
-        assertFalse(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
-
-        vm.expectEmit();
-        emit IMapleGlobals.ValidGovernedInstanceSet(GOVERNOR, TRADING_ADDRESS_KEY, SET_ADDRESS, true);
-
-        vm.prank(GOVERNOR);
-        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-
-        assertTrue(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
-    }
-
-}
-
-contract UnsetValidGovernedInstanceOfTests is BaseMapleGlobalsTest {
-
-    function test_unsetValidGovernedInstanceOf_notAuthorized() external {
+    function test_setValidMapleManagedWallet_notAuthorized() external {
         vm.expectRevert("MG:NOT_GOV_OR_OA");
-        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-    }
+        globals.setValidMapleManagedWallet(SET_ADDRESS, true);
 
-    function test_unsetValidGovernedInstanceOf_alreadyUnset() external {
         vm.prank(GOVERNOR);
-        vm.expectRevert("MG:UVGIO:ALREADY_UNSET");
-        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+        globals.setValidMapleManagedWallet(SET_ADDRESS, true);
     }
 
-    function test_unsetValidGovernedInstanceOf_success_governor() external {
-        vm.startPrank(GOVERNOR);
-        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-
-        assertTrue(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+    function test_setValidMapleManagedWallet_success_governor() external {
+        assertFalse(globals.isInstanceOf("MAPLE_MANAGED_WALLET", SET_ADDRESS));
 
         vm.expectEmit();
-        emit IMapleGlobals.ValidGovernedInstanceSet(GOVERNOR, TRADING_ADDRESS_KEY, SET_ADDRESS, false);
+        emit IMapleGlobals.ValidInstanceSet("MAPLE_MANAGED_WALLET", SET_ADDRESS, true);
 
-        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+        vm.prank(GOVERNOR);
+        globals.setValidMapleManagedWallet(SET_ADDRESS, true);
 
-        assertFalse(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+        assertTrue(globals.isInstanceOf("MAPLE_MANAGED_WALLET", SET_ADDRESS));
+
+        vm.expectEmit();
+        emit IMapleGlobals.ValidInstanceSet("MAPLE_MANAGED_WALLET", SET_ADDRESS, false);
+
+        vm.prank(GOVERNOR);
+        globals.setValidMapleManagedWallet(SET_ADDRESS, false);
+
+        assertFalse(globals.isInstanceOf("MAPLE_MANAGED_WALLET", SET_ADDRESS));
     }
 
-    function test_unsetValidGovernedInstanceOf_success_operationalAdmin() external {
-        vm.startPrank(GOVERNOR);
+    function test_setValidMapleManagedWallet_success_operationalAdmin() external {
+        vm.prank(GOVERNOR);
         globals.setOperationalAdmin(OPERATIONAL_ADMIN);
-        globals.setValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
-        vm.stopPrank();
 
-        assertTrue(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+        assertFalse(globals.isInstanceOf("MAPLE_MANAGED_WALLET", SET_ADDRESS));
 
         vm.expectEmit();
-        emit IMapleGlobals.ValidGovernedInstanceSet(OPERATIONAL_ADMIN, TRADING_ADDRESS_KEY, SET_ADDRESS, false);
+        emit IMapleGlobals.ValidInstanceSet("MAPLE_MANAGED_WALLET", SET_ADDRESS, true);
 
         vm.prank(OPERATIONAL_ADMIN);
-        globals.unsetValidGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS);
+        globals.setValidMapleManagedWallet(SET_ADDRESS, true);
 
-        assertFalse(globals.isGovernedInstanceOf(TRADING_ADDRESS_KEY, SET_ADDRESS));
+        assertTrue(globals.isInstanceOf("MAPLE_MANAGED_WALLET", SET_ADDRESS));
     }
 
 }
