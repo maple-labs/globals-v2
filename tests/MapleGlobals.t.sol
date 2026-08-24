@@ -15,12 +15,6 @@ import {
     MockStrategyManager
 } from "./mocks/Mocks.sol";
 
-// TODO: Add tests for:
-// - __isPoolDeployer harnessed view function
-// - canDeploy/canDeployFrom
-// - isPoolDeployer
-
-// TODO: Temporary harness. Remove once ownedStrategyManager is set through setter functionality in a follow-up ticket.
 contract MapleGlobalsHarness is MapleGlobals {
 
     function __setIsStrategyDelegate(address account_, bool isStrategyDelegate_) external {
