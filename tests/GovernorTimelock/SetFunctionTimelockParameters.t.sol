@@ -65,7 +65,7 @@ contract SetFunctionTimelockParametersTests is GovernorTimelockTestBase {
         address target           = makeAddr("target");
         bytes4  functionSelector = bytes4(keccak256("randomFunction()"));
 
-        ( uint32 currentDelay, uint32 currentExecutionWindow ) = timelock.functionTimelockParameters(target, functionSelector);
+        (uint32 currentDelay, uint32 currentExecutionWindow) = timelock.functionTimelockParameters(target, functionSelector);
 
         assertEq(currentDelay,           0);
         assertEq(currentExecutionWindow, 0);
@@ -79,7 +79,7 @@ contract SetFunctionTimelockParametersTests is GovernorTimelockTestBase {
         vm.prank(address(timelock));
         timelock.setFunctionTimelockParameters(target, functionSelector, delay, executionWindow);
 
-        ( currentDelay, currentExecutionWindow ) = timelock.functionTimelockParameters(target, functionSelector);
+        (currentDelay, currentExecutionWindow) = timelock.functionTimelockParameters(target, functionSelector);
 
         assertEq(currentDelay,           delay);
         assertEq(currentExecutionWindow, executionWindow);
@@ -89,7 +89,7 @@ contract SetFunctionTimelockParametersTests is GovernorTimelockTestBase {
         address target           = makeAddr("target");
         bytes4  functionSelector = bytes4(keccak256("randomFunction()"));
 
-        ( uint32 currentDelay, uint32 currentExecutionWindow ) = timelock.functionTimelockParameters(target, functionSelector);
+        (uint32 currentDelay, uint32 currentExecutionWindow) = timelock.functionTimelockParameters(target, functionSelector);
 
         assertEq(currentDelay,           0);
         assertEq(currentExecutionWindow, 0);
@@ -103,7 +103,7 @@ contract SetFunctionTimelockParametersTests is GovernorTimelockTestBase {
         vm.prank(address(timelock));
         timelock.setFunctionTimelockParameters(target, functionSelector, delay, executionWindow);
 
-        ( currentDelay, currentExecutionWindow ) = timelock.functionTimelockParameters(target, functionSelector);
+        (currentDelay, currentExecutionWindow) = timelock.functionTimelockParameters(target, functionSelector);
 
         assertEq(currentDelay,           delay);
         assertEq(currentExecutionWindow, executionWindow);
@@ -117,7 +117,7 @@ contract SetFunctionTimelockParametersTests is GovernorTimelockTestBase {
         vm.prank(address(timelock));
         timelock.setFunctionTimelockParameters(target, functionSelector, delay, executionWindow);
 
-        ( currentDelay, currentExecutionWindow ) = timelock.functionTimelockParameters(target, functionSelector);
+        (currentDelay, currentExecutionWindow) = timelock.functionTimelockParameters(target, functionSelector);
 
         assertEq(currentDelay,           0);
         assertEq(currentExecutionWindow, 0);

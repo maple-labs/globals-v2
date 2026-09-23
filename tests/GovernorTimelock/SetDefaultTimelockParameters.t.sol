@@ -29,7 +29,7 @@ contract SetDefaultTimelockParametersTests is GovernorTimelockTestBase {
     }
 
     function test_setDefaultTimelockParameters_success() public {
-        ( uint32 currentDelay, uint32 currentExecutionWindow ) = timelock.defaultTimelockParameters();
+        (uint32 currentDelay, uint32 currentExecutionWindow) = timelock.defaultTimelockParameters();
 
         assertEq(currentDelay,           1 days);
         assertEq(currentExecutionWindow, 1 days);
@@ -43,7 +43,7 @@ contract SetDefaultTimelockParametersTests is GovernorTimelockTestBase {
         vm.prank(address(timelock));
         timelock.setDefaultTimelockParameters(delay, executionWindow);
 
-        ( currentDelay, currentExecutionWindow ) = timelock.defaultTimelockParameters();
+        (currentDelay, currentExecutionWindow) = timelock.defaultTimelockParameters();
 
         assertEq(currentDelay,           delay);
         assertEq(currentExecutionWindow, executionWindow);

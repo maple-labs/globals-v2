@@ -28,8 +28,8 @@ interface IMapleGlobals is INonTransparentProxied {
         address indexed caller_,
         address indexed contract_,
         bytes32 indexed functionId_,
-        bytes32         dataHash_,
-        uint256         timestamp_
+        bytes32 dataHash_,
+        uint256 timestamp_
     );
 
     /**
@@ -44,8 +44,8 @@ interface IMapleGlobals is INonTransparentProxied {
         address indexed caller_,
         address indexed contract_,
         bytes32 indexed functionId_,
-        bytes32         dataHash_,
-        uint256         timestamp_
+        bytes32 dataHash_,
+        uint256 timestamp_
     );
 
     /**
@@ -521,7 +521,10 @@ interface IMapleGlobals is INonTransparentProxied {
         address caller_,
         address contract_,
         bytes32 functionId_
-    ) external view returns (uint256 timestamp, bytes32 dataHash);
+    )
+        external
+        view
+        returns (uint256 timestamp, bytes32 dataHash);
 
     /**
      *  @dev    Gets security admin address.
@@ -793,11 +796,12 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param durations_   The durations for the timelock window.
      */
     function setTimelockWindows(
-        address            contract_,
+        address contract_,
         bytes32[] calldata functionIds_,
         uint128[] calldata delays_,
         uint128[] calldata durations_
-    ) external;
+    )
+        external;
 
     /**
      *  @dev   Transfer the ownership of the pool manager.
@@ -826,11 +830,14 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return isValid_    True if the call is scheduled, false otherwise.
      */
     function isValidScheduledCall(
-        address          caller_,
-        address          contract_,
-        bytes32          functionId_,
-        bytes   calldata callData_
-    ) external view returns (bool isValid_);
+        address caller_,
+        address contract_,
+        bytes32 functionId_,
+        bytes calldata callData_
+    )
+        external
+        view
+        returns (bool isValid_);
 
     /**
      *  @dev   Schedules a call to be executed.

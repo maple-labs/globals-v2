@@ -8,10 +8,10 @@ import { GovernorTimelockTestBase } from "./GovernorTimelockBase.t.sol";
 contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
 
     function test_updateTimelockConfig_success_fullProposalCycle() public {
-        ( uint32 delay, ) = timelock.defaultTimelockParameters();
+        (uint32 delay,) = timelock.defaultTimelockParameters();
 
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(timelock);
         targets[1] = address(timelock);
@@ -37,12 +37,12 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
         vm.prank(executor);
         timelock.executeProposals(proposalIds, targets, data);
 
-        ( uint32 newDelay, uint32 newExecutionWindow ) = timelock.defaultTimelockParameters();
+        (uint32 newDelay, uint32 newExecutionWindow) = timelock.defaultTimelockParameters();
 
         assertEq(newDelay,           2 days);
         assertEq(newExecutionWindow, 2 days);
 
-        ( newDelay, newExecutionWindow ) =
+        (newDelay, newExecutionWindow) =
             timelock.functionTimelockParameters(address(timelock), timelock.setFunctionTimelockParameters.selector);
 
         assertEq(newDelay,           3 days);
@@ -50,10 +50,10 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
     }
 
     function test_executeProposals_revert_unscheduledProposal() public {
-        ( uint32 delay, ) = timelock.defaultTimelockParameters();
+        (uint32 delay,) = timelock.defaultTimelockParameters();
 
         address[] memory targets = new address[](1);
-        bytes[]   memory data    = new bytes[](1);
+        bytes[] memory   data    = new bytes[](1);
 
         targets[0] = address(timelock);
         data[0]    = abi.encodeWithSelector(timelock.setDefaultTimelockParameters.selector, 2 days, 2 days);
@@ -81,11 +81,11 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
     }
 
     function test_proposeRoleUpdates_unsuccessfulUnschedule() public {
-        ( uint32 delay, ) = timelock.defaultTimelockParameters();
+        (uint32 delay,) = timelock.defaultTimelockParameters();
 
-        bytes32[] memory roles    = new bytes32[](1);
-        address[] memory accounts = new address[](1);
-        bool[] memory shouldGrant = new bool[](1);
+        bytes32[] memory roles       = new bytes32[](1);
+        address[] memory accounts    = new address[](1);
+        bool[] memory    shouldGrant = new bool[](1);
 
         roles[0]       = timelock.PROPOSER_ROLE();
         accounts[0]    = proposer;
@@ -104,7 +104,7 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
         timelock.unscheduleProposals(proposalIds);
 
         address[] memory targets = new address[](1);
-        bytes[]   memory data    = new bytes[](1);
+        bytes[] memory   data    = new bytes[](1);
 
         targets[0] = address(timelock);
         data[0]    = abi.encodeWithSelector(timelock.updateRole.selector, roles[0], accounts[0], shouldGrant[0]);
@@ -118,20 +118,16 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
     }
 
     function test_setFunctionTimelockParameters_respectsDelayOfFunction() public {
-        ( uint32 delay, ) = timelock.defaultTimelockParameters();
+        (uint32 delay,) = timelock.defaultTimelockParameters();
 
         MockERC20 token = new MockERC20();
 
         address[] memory targets = new address[](1);
-        bytes[]   memory data    = new bytes[](1);
+        bytes[] memory   data    = new bytes[](1);
 
         targets[0] = address(timelock);
-        data[0]    = abi.encodeWithSelector(
-            timelock.setFunctionTimelockParameters.selector,
-            address(token),
-            token.transfer.selector,
-            5 days,
-            5 days
+        data[0] = abi.encodeWithSelector(
+            timelock.setFunctionTimelockParameters.selector, address(token), token.transfer.selector, 5 days, 5 days
         );
 
         vm.prank(proposer);
@@ -144,17 +140,13 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
         vm.prank(executor);
         timelock.executeProposals(proposalIds, targets, data);
 
-        ( uint32 newDelay, uint32 newExecutionWindow ) = timelock.functionTimelockParameters(address(token), token.transfer.selector);
+        (uint32 newDelay, uint32 newExecutionWindow) = timelock.functionTimelockParameters(address(token), token.transfer.selector);
 
         assertEq(newDelay,           5 days);
         assertEq(newExecutionWindow, 5 days);
 
         data[0] = abi.encodeWithSelector(
-            timelock.setFunctionTimelockParameters.selector,
-            address(token),
-            token.transfer.selector,
-            1 days,
-            1 days
+            timelock.setFunctionTimelockParameters.selector, address(token), token.transfer.selector, 1 days, 1 days
         );
 
         vm.prank(proposer);
@@ -171,7 +163,7 @@ contract GovernorTimelockScenariosTests is GovernorTimelockTestBase {
         vm.prank(executor);
         timelock.executeProposals(proposalIds, targets, data);
 
-        ( newDelay, newExecutionWindow ) = timelock.functionTimelockParameters(address(token), token.transfer.selector);
+        (newDelay, newExecutionWindow) = timelock.functionTimelockParameters(address(token), token.transfer.selector);
 
         assertEq(newDelay,           1 days);
         assertEq(newExecutionWindow, 1 days);

@@ -34,24 +34,19 @@ contract GovernorTimelockTestBase is Test {
     function test_deployment() public {
         assertEq(timelock.tokenWithdrawer(), tokenWithdrawer);
 
-        ( uint32 delay, uint32 executionWindow ) = timelock.defaultTimelockParameters();
+        (uint32 delay, uint32 executionWindow) = timelock.defaultTimelockParameters();
         assertEq(delay,           timelock.MIN_DELAY());
         assertEq(executionWindow, timelock.MIN_EXECUTION_WINDOW());
 
-        assertEq(timelock.hasRole(proposer,  timelock.PROPOSER_ROLE()),  true);
-        assertEq(timelock.hasRole(canceler,  timelock.CANCELLER_ROLE()), true);
-        assertEq(timelock.hasRole(executor,  timelock.EXECUTOR_ROLE()),  true);
-        assertEq(timelock.hasRole(roleAdmin, timelock.ROLE_ADMIN()),     true);
+        assertEq(timelock.hasRole(proposer, timelock.PROPOSER_ROLE()),  true);
+        assertEq(timelock.hasRole(canceler, timelock.CANCELLER_ROLE()), true);
+        assertEq(timelock.hasRole(executor, timelock.EXECUTOR_ROLE()),  true);
+        assertEq(timelock.hasRole(roleAdmin, timelock.ROLE_ADMIN()),    true);
     }
 
     function _assertProposal(uint256 proposalId, IGovernorTimelock.Proposal memory proposal) internal {
-        (
-            bytes32 proposalHash,
-            bool    isUnschedulable,
-            uint32  scheduledAt,
-            uint32  delayedUntil,
-            uint32  validUntil
-        ) = timelock.proposals(proposalId);
+        (bytes32 proposalHash, bool isUnschedulable, uint32 scheduledAt, uint32 delayedUntil, uint32 validUntil) =
+            timelock.proposals(proposalId);
 
         assertEq(proposalHash,    proposal.proposalHash);
         assertEq(isUnschedulable, proposal.isUnschedulable);
@@ -61,28 +56,23 @@ contract GovernorTimelockTestBase is Test {
     }
 
     function _assertEmptyProposal(uint256 proposalId) internal {
-        (
-            bytes32 proposalHash,
-            bool    isUnschedulable,
-            uint32  scheduledAt,
-            uint32  delayedUntil,
-            uint32  validUntil
-        ) = timelock.proposals(proposalId);
+        (bytes32 proposalHash, bool isUnschedulable, uint32 scheduledAt, uint32 delayedUntil, uint32 validUntil) =
+            timelock.proposals(proposalId);
 
         assertEq(proposalHash,    bytes32(0));
         assertEq(isUnschedulable, false);
         assertEq(scheduledAt,     0);
-        assertEq(delayedUntil ,   0);
+        assertEq(delayedUntil,    0);
         assertEq(validUntil,      0);
     }
 
     function _assertNotEmptyProposal(uint256 proposalId) internal {
-        ( bytes32 proposalHash, , uint32 scheduledAt, uint32 delayedUntil, uint32 validUntil ) = timelock.proposals(proposalId);
+        (bytes32 proposalHash,, uint32 scheduledAt, uint32 delayedUntil, uint32 validUntil) = timelock.proposals(proposalId);
 
         assertNotEq(proposalHash, bytes32(0));
-        assertNotEq(scheduledAt,  uint32(0));
+        assertNotEq(scheduledAt, uint32(0));
         assertNotEq(delayedUntil, uint32(0));
-        assertNotEq(validUntil,   uint32(0));
+        assertNotEq(validUntil, uint32(0));
     }
 
 }
