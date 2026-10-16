@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.0;
 
 import { MockTarget } from "../mocks/Mocks.sol";
 
@@ -21,7 +21,7 @@ contract UnscheduleProposalsTests is GovernorTimelockTestBase {
     function test_unscheduleProposals_revert_notUnschedulable() public {
         bytes32[] memory roles       = new bytes32[](2);
         address[] memory accounts    = new address[](2);
-        bool[]    memory shouldGrant = new bool[](2);
+        bool[] memory    shouldGrant = new bool[](2);
 
         roles[0] = keccak256("randomRole1");
         roles[1] = keccak256("randomRole2");
@@ -54,7 +54,7 @@ contract UnscheduleProposalsTests is GovernorTimelockTestBase {
 
     function test_unscheduleProposals_success() public {
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(new MockTarget());
         targets[1] = address(new MockTarget());

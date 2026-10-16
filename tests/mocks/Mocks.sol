@@ -1,24 +1,22 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.0;
 
 contract MockChainlinkOracle {
 
-    int256  public price;
+    int256 public price;
     uint256 public updatedAt;
 
-    function latestRoundData() external view returns (
-        uint80  roundId_,
-        int256  price_,
-        uint256 startedAt_,
-        uint256 updatedAt_,
-        uint80  answeredInRound_
-    ) {
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId_, int256 price_, uint256 startedAt_, uint256 updatedAt_, uint80 answeredInRound_)
+    {
         roundId_;
-        answeredInRound_;  // to silence the compiler warning
+        answeredInRound_; // to silence the compiler warning
 
-        price_           = price;
-        startedAt_       = 0;
-        updatedAt_       = updatedAt;
+        price_     = price;
+        startedAt_ = 0;
+        updatedAt_ = updatedAt;
     }
 
     function __setPrice(int256 price_) external {
@@ -41,7 +39,7 @@ contract MockERC20 {
 
     function transfer(address to_, uint256 amount_) external returns (bool success_) {
         balanceOf[msg.sender] -= amount_;
-        balanceOf[to_] += amount_;
+        balanceOf[to_]        += amount_;
         return true;
     }
 
@@ -57,6 +55,27 @@ contract MockPoolManager {
     }
 
     function setActive(bool active_) external { }
+
+    function __setFactory(address factory_) external {
+        factory = factory_;
+    }
+
+}
+
+contract MockStrategyManager {
+
+    bool public active;
+
+    address public factory;
+    address public strategyDelegate;
+
+    constructor(address strategyDelegate_) {
+        strategyDelegate = strategyDelegate_;
+    }
+
+    function setActive(bool active_) external {
+        active = active_;
+    }
 
     function __setFactory(address factory_) external {
         factory = factory_;
@@ -81,6 +100,6 @@ contract MockProxyFactory {
 
 contract MockTarget {
 
-    function randomFunction(bytes calldata params) external {}
+    function randomFunction(bytes calldata params) external { }
 
 }

@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.34;
 
 import { NonTransparentProxied } from "../modules/non-transparent-proxy/contracts/NonTransparentProxied.sol";
 
 import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
 
-import { IChainlinkAggregatorV3Like, IPoolManagerLike, IProxyLike, IProxyFactoryLike } from "./interfaces/Interfaces.sol";
+import {
+    IChainlinkAggregatorV3Like,
+    IProxyFactoryLike,
+    IProxyLike,
+    IPoolManagerLike,
+    IStrategyManagerLike
+} from "./interfaces/Interfaces.sol";
 
 /*
 
@@ -26,7 +32,12 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     struct PoolDelegate {
         address ownedPoolManager;
-        bool    isPoolDelegate;
+        bool isPoolDelegate;
+    }
+
+    struct StrategyDelegate {
+        address ownedStrategyManager;
+        bool isStrategyDelegate;
     }
 
     struct ScheduledCall {
@@ -41,7 +52,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
     struct PriceOracle {
         address oracle;
-        uint96  maxDelay;
+        uint96 maxDelay;
     }
 
     /**************************************************************************************************************************************/
@@ -65,7 +76,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(address => bool) public override isCollateralAsset;
     mapping(address => bool) public override isPoolAsset;
 
-    mapping(address => bool) internal _isPoolDeployer;  // NOTE: Deprecated, but currently allowing only disabling.
+    mapping(address => bool) internal _isPoolDeployer; // NOTE: Deprecated, but currently allowing only disabling.
 
     mapping(address => uint256) public override manualOverridePrice;
     mapping(address => uint256) public override maxCoverLiquidationPercent;
@@ -91,6 +102,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     mapping(address => mapping(address => bool)) internal _canDeployFrom;
 
     address public override operationalAdmin;
+
+    mapping(address => StrategyDelegate) public override strategyDelegates;
 
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
@@ -147,6 +160,22 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         IPoolManagerLike(poolManager_).setActive(true);
     }
 
+    function activateStrategyManager(address strategyManager_) external override onlyGovernorOrOperationalAdmin {
+        address factory_  = IStrategyManagerLike(strategyManager_).factory();
+        address delegate_ = IStrategyManagerLike(strategyManager_).strategyDelegate();
+
+        require(isInstanceOf["STRATEGY_MANAGER_FACTORY"][factory_],              "MG:ASM:INVALID_FACTORY");
+        require(IProxyFactoryLike(factory_).isInstance(strategyManager_),        "MG:ASM:INVALID_STRATEGY_MANAGER");
+        require(strategyDelegates[delegate_].isStrategyDelegate,                 "MG:ASM:INVALID_DELEGATE");
+        require(strategyDelegates[delegate_].ownedStrategyManager == address(0), "MG:ASM:ALREADY_SET");
+
+        strategyDelegates[delegate_].ownedStrategyManager = strategyManager_;
+
+        IStrategyManagerLike(strategyManager_).setActive(true);
+
+        emit StrategyManagerActivated(strategyManager_, delegate_);
+    }
+
     function setBootstrapMint(address asset_, uint256 amount_) external override onlyGovernorOrOperationalAdmin {
         emit BootstrapMintSet(asset_, bootstrapMint[asset_] = amount_);
     }
@@ -199,27 +228,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /**************************************************************************************************************************************/
 
     function setContractPause(address contract_, bool contractPaused_) external override onlyGovernorOrSecurityAdmin {
-        emit ContractPauseSet(
-            msg.sender,
-            contract_,
-            isContractPaused[contract_] = contractPaused_
-        );
+        emit ContractPauseSet(msg.sender, contract_, isContractPaused[contract_] = contractPaused_);
     }
 
     function setFunctionUnpause(address contract_, bytes4 sig_, bool functionUnpaused_) external override onlyGovernorOrSecurityAdmin {
-        emit FunctionUnpauseSet(
-            msg.sender,
-            contract_,
-            sig_,
-            isFunctionUnpaused[contract_][sig_] = functionUnpaused_
-        );
+        emit FunctionUnpauseSet(msg.sender, contract_, sig_, isFunctionUnpaused[contract_][sig_] = functionUnpaused_);
     }
 
     function setProtocolPause(bool protocolPaused_) external override onlyGovernorOrSecurityAdmin {
-        emit ProtocolPauseSet(
-            msg.sender,
-            protocolPaused = protocolPaused_
-        );
+        emit ProtocolPauseSet(msg.sender, protocolPaused = protocolPaused_);
     }
 
     /**************************************************************************************************************************************/
@@ -240,9 +257,13 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidCollateralAssetSet(collateralAsset_, isValid_);
     }
 
-    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
+    function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) public override onlyGovernorOrOperationalAdmin {
         isInstanceOf[instanceKey_][instance_] = isValid_;
         emit ValidInstanceSet(instanceKey_, instance_, isValid_);
+    }
+
+    function setValidMapleManagedWallet(address wallet_, bool isValid_) external override {
+        setValidInstanceOf("MAPLE_MANAGED_WALLET", wallet_, isValid_);
     }
 
     function setValidPoolAsset(address poolAsset_, bool isValid_) external override onlyGovernor {
@@ -267,6 +288,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit ValidPoolDeployerSet(account_, _isPoolDeployer[account_] = isPoolDeployer_);
     }
 
+    function setValidStrategyDelegate(address account_, bool isValid_) external override onlyGovernorOrOperationalAdmin {
+        require(account_ != address(0), "MG:SVSD:ZERO_ADDR");
+
+        require(isValid_ || strategyDelegates[account_].ownedStrategyManager == address(0), "MG:SVSD:OWNS_STRATEGY_MANAGER");
+
+        strategyDelegates[account_].isStrategyDelegate = isValid_;
+        emit ValidStrategyDelegateSet(account_, isValid_);
+    }
+
     /**************************************************************************************************************************************/
     /*** Price Setters                                                                                                                  ***/
     /**************************************************************************************************************************************/
@@ -284,7 +314,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         address poolManager_,
         uint256 maxCoverLiquidationPercent_
     )
-        external override onlyGovernorOrOperationalAdmin
+        external
+        override
+        onlyGovernorOrOperationalAdmin
     {
         require(maxCoverLiquidationPercent_ <= HUNDRED_PERCENT, "MG:SMCLP:GT_100");
         maxCoverLiquidationPercent[poolManager_] = maxCoverLiquidationPercent_;
@@ -304,7 +336,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         address poolManager_,
         uint256 platformManagementFeeRate_
     )
-        external override onlyGovernorOrOperationalAdmin
+        external
+        override
+        onlyGovernorOrOperationalAdmin
     {
         require(platformManagementFeeRate_ <= HUNDRED_PERCENT, "MG:SPMFR:RATE_GT_100");
         platformManagementFeeRate[poolManager_] = platformManagementFeeRate_;
@@ -315,7 +349,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         address poolManager_,
         uint256 platformOriginationFeeRate_
     )
-        external override onlyGovernorOrOperationalAdmin
+        external
+        override
+        onlyGovernorOrOperationalAdmin
     {
         require(platformOriginationFeeRate_ <= HUNDRED_PERCENT, "MG:SPOFR:RATE_GT_100");
         platformOriginationFeeRate[poolManager_] = platformOriginationFeeRate_;
@@ -326,7 +362,9 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         address poolManager_,
         uint256 platformServiceFeeRate_
     )
-        external override onlyGovernorOrOperationalAdmin
+        external
+        override
+        onlyGovernorOrOperationalAdmin
     {
         require(platformServiceFeeRate_ <= HUNDRED_PERCENT, "MG:SPSFR:RATE_GT_100");
         platformServiceFeeRate[poolManager_] = platformServiceFeeRate_;
@@ -343,12 +381,14 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     }
 
     function setTimelockWindows(
-        address            contract_,
+        address contract_,
         bytes32[] calldata functionIds_,
         uint128[] calldata delays_,
         uint128[] calldata durations_
     )
-        public override onlyGovernor
+        public
+        override
+        onlyGovernor
     {
         for (uint256 i_; i_ < functionIds_.length; ++i_) {
             _setTimelockWindow(contract_, functionIds_[i_], delays_[i_], durations_[i_]);
@@ -369,14 +409,36 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         emit PoolManagerOwnershipTransferred(fromPoolDelegate_, toPoolDelegate_, msg.sender);
     }
 
+    function transferOwnedStrategyManager(address fromStrategyDelegate_, address toStrategyDelegate_) external override {
+        StrategyDelegate storage fromDelegate_ = strategyDelegates[fromStrategyDelegate_];
+        StrategyDelegate storage toDelegate_   = strategyDelegates[toStrategyDelegate_];
+
+        require(fromDelegate_.ownedStrategyManager == msg.sender, "MG:TOSM:NOT_AUTHORIZED");
+        require(toDelegate_.isStrategyDelegate,                   "MG:TOSM:NOT_STRATEGY_DELEGATE");
+        require(toDelegate_.ownedStrategyManager == address(0),   "MG:TOSM:ALREADY_SET");
+
+        fromDelegate_.ownedStrategyManager = address(0);
+        toDelegate_.ownedStrategyManager   = msg.sender;
+
+        emit StrategyManagerOwnershipTransferred(fromStrategyDelegate_, toStrategyDelegate_, msg.sender);
+    }
+
     /**************************************************************************************************************************************/
     /*** Schedule Functions                                                                                                             ***/
     /**************************************************************************************************************************************/
 
-    function isValidScheduledCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_)
-        public override view returns (bool isValid_)
+    function isValidScheduledCall(
+        address caller_,
+        address contract_,
+        bytes32 functionId_,
+        bytes calldata callData_
+    )
+        public
+        view
+        override
+        returns (bool isValid_)
     {
-        ScheduledCall      storage scheduledCall_      = scheduledCalls[caller_][contract_][functionId_];
+        ScheduledCall storage      scheduledCall_      = scheduledCalls[caller_][contract_][functionId_];
         TimelockParameters storage timelockParameters_ = timelockParametersOf[contract_][functionId_];
 
         uint256 timestamp_ = scheduledCall_.timestamp;
@@ -388,10 +450,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
             duration_ = defaultTimelockParameters.duration;
         }
 
-        isValid_ =
-            (block.timestamp >= timestamp_ + delay_) &&
-            (block.timestamp <= timestamp_ + delay_ + duration_) &&
-            (keccak256(abi.encode(callData_)) == scheduledCall_.dataHash);
+        isValid_ = (block.timestamp >= timestamp_ + delay_) && (block.timestamp <= timestamp_ + delay_ + duration_)
+            && (keccak256(abi.encode(callData_)) == scheduledCall_.dataHash);
     }
 
     function scheduleCall(address contract_, bytes32 functionId_, bytes calldata callData_) external override {
@@ -406,8 +466,15 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         _unscheduleCall(caller_, msg.sender, functionId_, callData_);
     }
 
-    function unscheduleCall(address caller_, address contract_, bytes32 functionId_, bytes calldata callData_)
-        external override onlyGovernor
+    function unscheduleCall(
+        address caller_,
+        address contract_,
+        bytes32 functionId_,
+        bytes calldata callData_
+    )
+        external
+        override
+        onlyGovernor
     {
         _unscheduleCall(caller_, contract_, functionId_, callData_);
     }
@@ -426,20 +493,19 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
     /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
 
-    function canDeploy(address caller_) public override view returns (bool canDeploy_) {
+    function canDeploy(address caller_) public view override returns (bool canDeploy_) {
         canDeploy_ = canDeployFrom(msg.sender, caller_);
     }
 
-    function canDeployFrom(address factory_, address caller_) public override view returns (bool canDeployFrom_) {
+    function canDeployFrom(address factory_, address caller_) public view override returns (bool canDeployFrom_) {
         // Simply check if the caller can deploy at the factory. If not, since a PoolManager is often deployed in the same transaction as
         // the Strategies it deploys, check if `factory_` is a StrategyFactory and the caller is a PoolManager or
         // if the factory is a loan factory and the caller is a valid borrower.
-        canDeployFrom_ = _canDeployFrom[factory_][caller_] ||
-                         (isInstanceOf["LOAN_FACTORY"][factory_] && isBorrower[caller_]) ||
-                         (isInstanceOf["STRATEGY_FACTORY"][factory_] && _isPoolManager(caller_));
+        canDeployFrom_ = _canDeployFrom[factory_][caller_] || (isInstanceOf["LOAN_FACTORY"][factory_] && isBorrower[caller_])
+            || (isInstanceOf["STRATEGY_FACTORY"][factory_] && _isPoolManager(caller_));
     }
 
-    function getLatestPrice(address asset_) external override view returns (uint256 latestPrice_) {
+    function getLatestPrice(address asset_) external view override returns (uint256 latestPrice_) {
         // If governor has overridden price because of oracle outage, return overridden price.
         if (manualOverridePrice[asset_] != 0) return manualOverridePrice[asset_];
 
@@ -447,12 +513,7 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
 
         require(oracle_ != address(0), "MG:GLP:ZERO_ORACLE");
 
-        (
-            ,
-            int256 price_,
-            ,
-            uint256 updatedAt_,
-        ) = IChainlinkAggregatorV3Like(oracle_).latestRoundData();
+        (, int256 price_,, uint256 updatedAt_,) = IChainlinkAggregatorV3Like(oracle_).latestRoundData();
 
         require(updatedAt_ != 0,                                                  "MG:GLP:ROUND_NOT_COMPLETE");
         require(updatedAt_ >= (block.timestamp - priceOracleOf[asset_].maxDelay), "MG:GLP:STALE_PRICE");
@@ -500,9 +561,8 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         // Revert if caller is not FixedTermLoanManagerFactory, PoolManagerFactory, or WithdrawalManagerFactory,
         // the only allowed callers of this deprecated function.
         require(
-            isInstanceOf["FT_LOAN_MANAGER_FACTORY"][msg.sender] ||
-            isInstanceOf["POOL_MANAGER_FACTORY"][msg.sender] ||
-            isInstanceOf["WITHDRAWAL_MANAGER_FACTORY"][msg.sender],
+            isInstanceOf["FT_LOAN_MANAGER_FACTORY"][msg.sender] || isInstanceOf["POOL_MANAGER_FACTORY"][msg.sender]
+                || isInstanceOf["WITHDRAWAL_MANAGER_FACTORY"][msg.sender],
             "MG:IPD:INV_FACTORY"
         );
 
@@ -510,8 +570,16 @@ contract MapleGlobals is IMapleGlobals, NonTransparentProxied {
         isPoolDeployer_ = canDeploy(caller_);
     }
 
+    function isStrategyDelegate(address account_) external view override returns (bool isStrategyDelegate_) {
+        isStrategyDelegate_ = strategyDelegates[account_].isStrategyDelegate;
+    }
+
     function ownedPoolManager(address account_) external view override returns (address poolManager_) {
         poolManager_ = poolDelegates[account_].ownedPoolManager;
+    }
+
+    function ownedStrategyManager(address account_) external view override returns (address strategyManager_) {
+        strategyManager_ = strategyDelegates[account_].ownedStrategyManager;
     }
 
     /**************************************************************************************************************************************/

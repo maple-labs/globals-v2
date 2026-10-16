@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.0;
 
 import { IGovernorTimelock } from "../../contracts/interfaces/IGovernorTimelock.sol";
 
@@ -33,7 +33,7 @@ contract ProposeRoleUpdatesTests is GovernorTimelockTestBase {
     function test_proposeRoleUpdates_success() public {
         bytes32[] memory roles       = new bytes32[](2);
         address[] memory accounts    = new address[](2);
-        bool[]    memory shouldGrant = new bool[](2);
+        bool[] memory    shouldGrant = new bool[](2);
 
         roles[0] = timelock.PROPOSER_ROLE();
         roles[1] = timelock.EXECUTOR_ROLE();
@@ -46,23 +46,21 @@ contract ProposeRoleUpdatesTests is GovernorTimelockTestBase {
         shouldGrant[1] = false;
 
         assertEq(timelock.hasRole(newProposer, timelock.PROPOSER_ROLE()), false);
-        assertEq(timelock.hasRole(executor,    timelock.EXECUTOR_ROLE()), true);
+        assertEq(timelock.hasRole(executor, timelock.EXECUTOR_ROLE()),    true);
 
         _assertEmptyProposal(1);
         _assertEmptyProposal(2);
 
         assertEq(timelock.latestProposalId(), 0);
 
-        ( uint32 delay, uint32 executionWindow ) = timelock.defaultTimelockParameters();
+        (uint32 delay, uint32 executionWindow) = timelock.defaultTimelockParameters();
 
-        bytes32 expectedProposalHash1 =
-            keccak256(
-                abi.encode(address(timelock), abi.encodeWithSelector(timelock.updateRole.selector, roles[0], accounts[0], shouldGrant[0]))
-            );
-        bytes32 expectedProposalHash2 =
-            keccak256(
-                abi.encode(address(timelock), abi.encodeWithSelector(timelock.updateRole.selector, roles[1], accounts[1], shouldGrant[1]))
-            );
+        bytes32 expectedProposalHash1 = keccak256(
+            abi.encode(address(timelock), abi.encodeWithSelector(timelock.updateRole.selector, roles[0], accounts[0], shouldGrant[0]))
+        );
+        bytes32 expectedProposalHash2 = keccak256(
+            abi.encode(address(timelock), abi.encodeWithSelector(timelock.updateRole.selector, roles[1], accounts[1], shouldGrant[1]))
+        );
 
         uint32 expectedScheduledTimestamp = uint32(block.timestamp);
         uint32 expectedDelayedUntil       = uint32(block.timestamp) + delay;

@@ -1,6 +1,6 @@
 # Maple Globals V2
 
-![Foundry CI](https://github.com/maple-labs/globals-v2/actions/workflows/forge.yaml/badge.svg)
+![Foundry CI](https://github.com/maple-labs/globals-v2/actions/workflows/ci.yaml/badge.svg)
 [![GitBook - Documentation](https://img.shields.io/badge/GitBook-Documentation-orange?logo=gitbook&logoColor=white)](https://maplefinance.gitbook.io/maple/technical-resources/protocol-overview)
 [![Foundry][foundry-badge]][foundry]
 [![License: BUSL 1.1](https://img.shields.io/badge/License-BUSL%201.1-blue.svg)](https://github.com/maple-labs/globals-v2/blob/main/LICENSE)
@@ -10,15 +10,17 @@
 
 ## Overview
 
-This repository holds the singleton contract `MapleGlobals` which is responsible for configuring protocol wide parameters of the Maple V2 protocol.
+This repository holds the singleton contract `MapleGlobals` which is responsible for configuring protocol wide parameters of the Maple V2 protocol, and the `GovernorTimelock` contract which schedules and executes governance proposals after a timelock.
 
 ## Dependencies/Inheritance
 
 Contracts in this repo inherit and import code from:
+- [`maple-labs/erc20-helper`](https://github.com/maple-labs/erc20-helper)
 - [`maple-labs/non-transparent-proxy`](https://github.com/maple-labs/non-transparent-proxy)
 
 Contracts inherit and import code in the following ways:
-- `Globals` inherits `NonTransparentProxied` for proxy logic.
+- `MapleGlobals` inherits `NonTransparentProxied` for proxy logic.
+- `GovernorTimelock` uses `ERC20Helper` for token interactions.
 
 Versions of dependencies can be checked with `git submodule status`.
 
@@ -38,27 +40,6 @@ forge install
 - To run specific tests: `forge test --match <test_name>`
 
 `./scripts/test.sh` is used to enable Foundry profile usage with the `-p` flag. Profiles are used to specify the number of fuzz runs.
-
-## Audit Reports
-
-### December 2022 Release
-
-| Auditor | Report Link |
-|---|---|
-| Trail of Bits | [`2022-08-24 - Trail of Bits Report`](https://docs.google.com/viewer?url=https://github.com/maple-labs/maple-v2-audits/files/10246688/Maple.Finance.v2.-.Final.Report.-.Fixed.-.2022.pdf) |
-| Spearbit | [`2022-10-17 - Spearbit Report`](https://docs.google.com/viewer?url=https://github.com/maple-labs/maple-v2-audits/files/10223545/Maple.Finance.v2.-.Spearbit.pdf) |
-| Three Sigma | [`2022-10-24 - Three Sigma Report`](https://docs.google.com/viewer?url=https://github.com/maple-labs/maple-v2-audits/files/10223541/three-sigma_maple-finance_code-audit_v1.1.1.pdf) |
-| Three Sigma | [`2023-11-06 - Three Sigma Report`](https://docs.google.com/viewer?url=https://github.com/maple-labs/maple-v2-audits/files/13707288/Maple-Q4-Three-Sigma-Audit.pdf) |
-| 0xMacro | [`2023-11-27 - 0xMacro Report`](https://docs.google.com/viewer?url=https://github.com/maple-labs/maple-v2-audits/files/13707291/Maple-Q4-0xMacro-Audit.pdf) |
-
-<br>
-
-### June 2023 Release
-
-| Auditor | Report Link |
-|---|---|
-| Spearbit Auditors via Cantina | [`2023-06-05 - Cantina Report`](https://docs.google.com/viewer?url=https://github.com/maple-labs/maple-v2-audits/files/11667848/cantina-maple.pdf) |
-| Three Sigma | [`2023-04-10 - Three Sigma Report`](https://docs.google.com/viewer?url=https://github.com/maple-labs/maple-v2-audits/files/11663546/maple-v2-audit_three-sigma_2023.pdf) |
 
 ## Bug Bounty
 

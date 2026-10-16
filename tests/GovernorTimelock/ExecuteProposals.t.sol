@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.0;
 
 import { MockTarget } from "../mocks/Mocks.sol";
 
@@ -33,7 +33,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
     function test_executeProposals_revert_notFound() public {
         uint256[] memory proposalIds = new uint256[](2);
         address[] memory targets     = new address[](2);
-        bytes[]   memory data        = new bytes[](2);
+        bytes[] memory   data        = new bytes[](2);
 
         proposalIds[0] = 1;
         proposalIds[1] = 2;
@@ -45,7 +45,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
 
     function test_executeProposals_revert_notExecutable() public {
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(new MockTarget());
         targets[1] = address(new MockTarget());
@@ -56,7 +56,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         data[0] = abi.encodeWithSelector(functionToCall1, "randomParameters1");
         data[1] = abi.encodeWithSelector(functionToCall2, "randomParameters2");
 
-        ( uint32 delay, uint32 executionWindow ) = timelock.defaultTimelockParameters();
+        (uint32 delay, uint32 executionWindow) = timelock.defaultTimelockParameters();
 
         vm.prank(address(timelock));
         timelock.setFunctionTimelockParameters(targets[1], functionToCall2, 2 * delay, 2 * executionWindow);
@@ -91,7 +91,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
 
     function test_executeProposals_revert_invalidData() public {
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(new MockTarget());
         targets[1] = address(new MockTarget());
@@ -102,7 +102,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         data[0] = abi.encodeWithSelector(functionToCall1, "randomParameters1");
         data[1] = abi.encodeWithSelector(functionToCall2, "randomParameters2");
 
-        ( uint32 delay, ) = timelock.defaultTimelockParameters();
+        (uint32 delay,) = timelock.defaultTimelockParameters();
 
         vm.prank(proposer);
         timelock.scheduleProposals(targets, data);
@@ -126,7 +126,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
 
     function test_executeProposals_executionFailed() public {
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(new MockTarget());
         targets[1] = address(new MockTarget());
@@ -140,7 +140,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
         vm.prank(proposer);
         timelock.scheduleProposals(targets, data);
 
-        ( uint32 delay, ) = timelock.defaultTimelockParameters();
+        (uint32 delay,) = timelock.defaultTimelockParameters();
 
         vm.warp(block.timestamp + delay);
 
@@ -165,7 +165,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
 
     function test_executeProposals_success() public {
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(new MockTarget());
         targets[1] = address(new MockTarget());
@@ -187,7 +187,7 @@ contract ExecuteProposalsTests is GovernorTimelockTestBase {
 
         assertEq(timelock.latestProposalId(), 2);
 
-        ( uint32 delay, ) = timelock.defaultTimelockParameters();
+        (uint32 delay,) = timelock.defaultTimelockParameters();
 
         vm.warp(block.timestamp + delay);
 

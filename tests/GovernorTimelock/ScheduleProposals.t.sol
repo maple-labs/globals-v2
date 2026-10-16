@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.0;
 
 import { IGovernorTimelock } from "../../contracts/interfaces/IGovernorTimelock.sol";
 
@@ -28,7 +28,7 @@ contract ScheduleProposalsTests is GovernorTimelockTestBase {
 
     function test_scheduleProposals_revert_updateRoleNotAllowed() public {
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(new MockTarget());
         targets[1] = address(timelock);
@@ -43,7 +43,7 @@ contract ScheduleProposalsTests is GovernorTimelockTestBase {
 
     function test_scheduleProposals_revert_emptyTarget() public {
         address[] memory targets = new address[](1);
-        bytes[]   memory data    = new bytes[](1);
+        bytes[] memory   data    = new bytes[](1);
 
         targets[0] = address(1337);
         data[0]    = abi.encodeWithSignature("randomFunction(bytes)", "randomParameters");
@@ -55,7 +55,7 @@ contract ScheduleProposalsTests is GovernorTimelockTestBase {
 
     function test_scheduleProposals_success() public {
         address[] memory targets = new address[](2);
-        bytes[]   memory data    = new bytes[](2);
+        bytes[] memory   data    = new bytes[](2);
 
         targets[0] = address(new MockTarget());
         targets[1] = address(new MockTarget());
@@ -72,7 +72,7 @@ contract ScheduleProposalsTests is GovernorTimelockTestBase {
         vm.prank(address(timelock));
         timelock.setFunctionTimelockParameters(targets[1], functionToCall2, secondFunctionDelay, secondFunctionExecutionWindow);
 
-        ( uint32 delay, uint32 executionWindow ) = timelock.defaultTimelockParameters();
+        (uint32 delay, uint32 executionWindow) = timelock.defaultTimelockParameters();
 
         IGovernorTimelock.Proposal memory expectedProposal1 = IGovernorTimelock.Proposal({
             proposalHash:    keccak256(abi.encode(targets[0], data[0])),

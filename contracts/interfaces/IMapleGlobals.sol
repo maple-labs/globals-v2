@@ -28,8 +28,8 @@ interface IMapleGlobals is INonTransparentProxied {
         address indexed caller_,
         address indexed contract_,
         bytes32 indexed functionId_,
-        bytes32         dataHash_,
-        uint256         timestamp_
+        bytes32 dataHash_,
+        uint256 timestamp_
     );
 
     /**
@@ -44,8 +44,8 @@ interface IMapleGlobals is INonTransparentProxied {
         address indexed caller_,
         address indexed contract_,
         bytes32 indexed functionId_,
-        bytes32         dataHash_,
-        uint256         timestamp_
+        bytes32 dataHash_,
+        uint256 timestamp_
     );
 
     /**
@@ -196,6 +196,25 @@ interface IMapleGlobals is INonTransparentProxied {
     event SecurityAdminSet(address indexed previousSecurityAdmin_, address indexed currentSecurityAdmin_);
 
     /**
+     *  @dev   The strategy manager was activated.
+     *  @param strategyManager_  The address of the strategy manager.
+     *  @param strategyDelegate_ The address of the strategy delegate.
+     */
+    event StrategyManagerActivated(address indexed strategyManager_, address indexed strategyDelegate_);
+
+    /**
+     *  @dev   The ownership of the strategy manager was transferred.
+     *  @param fromStrategyDelegate_ The address of the previous strategy delegate.
+     *  @param toStrategyDelegate_   The address of the new strategy delegate.
+     *  @param strategyManager_      The address of the strategy manager.
+     */
+    event StrategyManagerOwnershipTransferred(
+        address indexed fromStrategyDelegate_,
+        address indexed toStrategyDelegate_,
+        address indexed strategyManager_
+    );
+
+    /**
      *  @dev   A new timelock window was set.
      *  @param contract_   The contract to execute the call on.
      *  @param functionId_ The id of the function to execute.
@@ -246,6 +265,13 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param isValid_      The validity of the asset.
      */
     event ValidPoolDeployerSet(address indexed poolDeployer_, bool isValid_);
+
+    /**
+     *  @dev   A valid strategy delegate was set.
+     *  @param account_ The address of the account.
+     *  @param isValid_ The validity of the strategy delegate.
+     */
+    event ValidStrategyDelegateSet(address indexed account_, bool isValid_);
 
     /**************************************************************************************************************************************/
     /*** View Functions                                                                                                                 ***/
@@ -375,6 +401,13 @@ interface IMapleGlobals is INonTransparentProxied {
     function isPoolDeployer(address account_) external view returns (bool isPoolDeployer_);
 
     /**
+     *  @dev    Gets the validity of a strategy delegate.
+     *  @param  account_            The address of the account to query.
+     *  @return isStrategyDelegate_ A boolean indicating the validity of the strategy delegate.
+     */
+    function isStrategyDelegate(address account_) external view returns (bool isStrategyDelegate_);
+
+    /**
      *  @dev    Gets the manual override price for an asset.
      *  @param  asset_               The address of the asset to query.
      *  @return manualOverridePrice_ The manual override price for the asset.
@@ -419,6 +452,13 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return poolManager_ The address of the pool manager.
      */
     function ownedPoolManager(address account_) external view returns (address poolManager_);
+
+    /**
+     *  @dev    Gets the address of the owner strategy manager.
+     *  @param  account_         The address of the account to query.
+     *  @return strategyManager_ The address of the strategy manager.
+     */
+    function ownedStrategyManager(address account_) external view returns (address strategyManager_);
 
     /**
      *  @dev    Gets the address and maximum delay of the oracle for the given asset.
@@ -481,13 +521,24 @@ interface IMapleGlobals is INonTransparentProxied {
         address caller_,
         address contract_,
         bytes32 functionId_
-    ) external view returns (uint256 timestamp, bytes32 dataHash);
+    )
+        external
+        view
+        returns (uint256 timestamp, bytes32 dataHash);
 
     /**
      *  @dev    Gets security admin address.
      *  @return securityAdmin_ The address of the security admin.
      */
     function securityAdmin() external view returns (address securityAdmin_);
+
+    /**
+     *  @dev    Gets strategy delegate address information.
+     *  @param  strategyDelegate_    The address of the strategy delegate to query.
+     *  @return ownedStrategyManager The address of the strategy manager owned by the strategy delegate.
+     *  @return isStrategyDelegate   A boolean indication whether or not the address passed is a current strategy delegate.
+     */
+    function strategyDelegates(address strategyDelegate_) external view returns (address ownedStrategyManager, bool isStrategyDelegate);
 
     /**
      *  @dev    Gets the time lock parameters for a given contract and function.
@@ -522,6 +573,12 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param poolManager_ The address of the pool manager to activate.
      */
     function activatePoolManager(address poolManager_) external;
+
+    /**
+     *  @dev   Activates the strategy manager.
+     *  @param strategyManager_ The address of the strategy manager to activate.
+     */
+    function activateStrategyManager(address strategyManager_) external;
 
     /**
      *  @dev   Sets the virtualized first mint that acts as as offset to `totalAssets` and `totalSupply`
@@ -630,6 +687,13 @@ interface IMapleGlobals is INonTransparentProxied {
     function setValidInstanceOf(bytes32 instanceKey_, address instance_, bool isValid_) external;
 
     /**
+     *  @dev   Sets the validity of a Maple managed wallet.
+     *  @param wallet_  The address of the Maple managed wallet.
+     *  @param isValid_ A boolean indicating the validity of the Maple managed wallet.
+     */
+    function setValidMapleManagedWallet(address wallet_, bool isValid_) external;
+
+    /**
      *  @dev   Sets the validity of the pool asset.
      *  @param poolAsset_ The address of the pool asset to set the validity for.
      *  @param isValid_   A boolean indicating the validity of the pool asset.
@@ -649,6 +713,13 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param isPoolDeployer_ A boolean indicating the validity of the pool deployer.
      */
     function setValidPoolDeployer(address account_, bool isPoolDeployer_) external;
+
+    /**
+     *  @dev   Sets the validity of the strategy delegate.
+     *  @param strategyDelegate_ The address of the strategy delegate to set the validity for.
+     *  @param isValid_          A boolean indicating the validity of the strategy delegate.
+     */
+    function setValidStrategyDelegate(address strategyDelegate_, bool isValid_) external;
 
     /**************************************************************************************************************************************/
     /*** Price Setters                                                                                                                  ***/
@@ -725,11 +796,12 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param durations_   The durations for the timelock window.
      */
     function setTimelockWindows(
-        address            contract_,
+        address contract_,
         bytes32[] calldata functionIds_,
         uint128[] calldata delays_,
         uint128[] calldata durations_
-    ) external;
+    )
+        external;
 
     /**
      *  @dev   Transfer the ownership of the pool manager.
@@ -737,6 +809,13 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @param toPoolDelegate_   The address of the pool delegate to transfer ownership to.
      */
     function transferOwnedPoolManager(address fromPoolDelegate_, address toPoolDelegate_) external;
+
+    /**
+     *  @dev   Transfer the ownership of the strategy manager.
+     *  @param fromStrategyDelegate_ The address of the strategy delegate to transfer ownership from.
+     *  @param toStrategyDelegate_   The address of the strategy delegate to transfer ownership to.
+     */
+    function transferOwnedStrategyManager(address fromStrategyDelegate_, address toStrategyDelegate_) external;
 
     /**************************************************************************************************************************************/
     /*** Schedule Functions                                                                                                             ***/
@@ -751,11 +830,14 @@ interface IMapleGlobals is INonTransparentProxied {
      *  @return isValid_    True if the call is scheduled, false otherwise.
      */
     function isValidScheduledCall(
-        address          caller_,
-        address          contract_,
-        bytes32          functionId_,
-        bytes   calldata callData_
-    ) external view returns (bool isValid_);
+        address caller_,
+        address contract_,
+        bytes32 functionId_,
+        bytes calldata callData_
+    )
+        external
+        view
+        returns (bool isValid_);
 
     /**
      *  @dev   Schedules a call to be executed.
